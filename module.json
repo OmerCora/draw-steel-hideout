@@ -1,8 +1,8 @@
 {
   "id": "draw-steel-hideout",
   "title": "Draw Steel - Hideout",
-  "description": "Stronghold management module for Draw Steel: tracks respite projects, manages followers (Artisan/Sage), assigns party members to projects, and maintains a party stash of items.",
-  "version": "0.1.0",
+  "description": "Downtime management module for Draw Steel: tracks respite projects, manages followers (Artisan/Sage), assigns members to projects, and maintains a party stash of items.",
+  "version": "1.0.0",
   "compatibility": {
     "minimum": "13",
     "verified": "14.360"
@@ -33,6 +33,7 @@
   "styles": [
     "styles/hideout.css"
   ],
+  "socket": true,
   "languages": [
     {
       "lang": "en",

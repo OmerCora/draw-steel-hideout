@@ -18,6 +18,7 @@ export const SETTINGS = {
   STASH: "stash",
   FOLLOWERS: "roster-followers",
   ARCHIVES: "archives",
+  MINIMUM_ROLE: "minimumRole",
 };
 
 /** Default compendium pack IDs that contain project-type items. */

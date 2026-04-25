@@ -4,6 +4,7 @@
  */
 
 import { MODULE_ID, SETTINGS } from "../config.mjs";
+import { saveWorldSetting } from "../socket.mjs";
 
 export function getArchives() {
   try {
@@ -14,7 +15,7 @@ export function getArchives() {
 }
 
 async function _saveArchives(items) {
-  await game.settings.set(MODULE_ID, SETTINGS.ARCHIVES, JSON.stringify(items));
+  await saveWorldSetting(SETTINGS.ARCHIVES, JSON.stringify(items));
 }
 
 /**
@@ -35,9 +36,23 @@ export async function addArchiveEntry(entry) {
     echelon: entry.echelon ?? 0,
     hasCraftingData: entry.hasCraftingData ?? false,
     projectData: entry.projectData ?? null,
+    craftCount: entry.craftCount ?? 0,
   });
   await _saveArchives(items);
   return true;
+}
+
+/**
+ * Update specific fields on an existing archive entry.
+ * @param {string} id  The local entry ID.
+ * @param {object} updates  Plain object of fields to merge in.
+ */
+export async function updateArchiveEntry(id, updates) {
+  const items = getArchives();
+  const idx = items.findIndex(i => i.id === id);
+  if (idx === -1) return;
+  Object.assign(items[idx], updates);
+  await _saveArchives(items);
 }
 
 /**

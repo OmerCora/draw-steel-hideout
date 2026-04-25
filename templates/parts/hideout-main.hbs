@@ -103,17 +103,19 @@
                   <div class="dshideout-project-meta-row">
                     <span class="dshideout-meta-label">{{localize "DSHIDEOUT.Projects.TypeLabel"}}:</span>
                     <span class="dshideout-type-label">{{this.projectTypeLabel}}</span>
-                    {{#if this.yieldDisplay}}
-                      <span class="dshideout-meta-label" style="margin-left:8px">{{localize "DSHIDEOUT.Projects.YieldAmountLabel"}}:</span>
-                      <span class="dshideout-type-label">{{this.yieldDisplay}}</span>
-                    {{/if}}
                   </div>
                   {{#if this.charLabels.length}}
-                    <div class="dshideout-project-meta-row" style="margin-top:4px; margin-bottom:4px">
+                    <div class="dshideout-project-meta-row" style="margin-top:4px;">
                       <span class="dshideout-meta-label">{{localize "DSHIDEOUT.Projects.CharsLabel"}}:</span>
                       {{#each this.charLabels}}
                         <span class="dshideout-char-pill">{{this}}</span>
                       {{/each}}
+                    </div>
+                  {{/if}}
+                  {{#if this.yieldText}}
+                    <div class="dshideout-project-meta-row" style="margin-top:4px; margin-bottom:4px">
+                      <span class="dshideout-meta-label">{{localize "DSHIDEOUT.Projects.YieldAmountLabel"}}:</span>
+                      <span class="dshideout-type-label">{{this.yieldText}}</span>
                     </div>
                   {{/if}}
                 </div>
@@ -200,12 +202,14 @@
         </li>
       {{/if}}
 
-      {{!-- Drop zone hint scrolls with list --}}
-      <li class="dshideout-drop-hint-li">
-        <div class="dshideout-drop-hint">
-          <i class="fas fa-plus-circle"></i> {{localize "DSHIDEOUT.Projects.DropHint"}}
-        </div>
-      </li>
+      {{!-- Drop zone hint (GM only — players cannot create projects) --}}
+      {{#if isGM}}
+        <li class="dshideout-drop-hint-li">
+          <div class="dshideout-drop-hint">
+            <i class="fas fa-plus-circle"></i> {{localize "DSHIDEOUT.Projects.DropHint"}}
+          </div>
+        </li>
+      {{/if}}
     </ul>
 
   </div>
@@ -213,13 +217,20 @@
 
   {{!-- ==================  ARCHIVES TAB  ================== --}}
   {{#dshideout-eq activeTab "archives"}}
-  <div class="dshideout-archives-panel">
+  <div class="dshideout-archives-panel {{#if isGM}}is-gm{{else}}is-player{{/if}}"
+       style="--dshideout-archive-prereq-w: {{archivePrereqWidth}}px;">
     <hr class="dshideout-divider" />
     <div class="dshideout-archives-list">
       {{#if archiveGroups.length}}
         {{#each archiveGroups}}
           <section class="dshideout-stash-group">
-            <h4 class="dshideout-stash-group-header">{{this.label}}</h4>
+            <div class="dshideout-stash-group-header dshideout-archive-group-header">
+              <span class="dshideout-group-icon-spacer"></span>
+              <span class="dshideout-group-label">{{this.label}}</span>
+              <span class="dshideout-col-header-text dshideout-archive-col-echelon">{{localize "DSHIDEOUT.Column.Echelon"}}</span>
+              <span class="dshideout-col-header-text dshideout-archive-col-source">{{localize "DSHIDEOUT.Column.Source"}}</span>
+              <span class="dshideout-col-header-text">{{localize "DSHIDEOUT.Column.Prerequisite"}}</span>
+            </div>
             <ul class="dshideout-stash-items">
               {{#each this.items}}
                 <li class="dshideout-stash-row {{#if this.isExpanded}}is-expanded{{/if}}"
@@ -230,15 +241,33 @@
                     <img class="dshideout-stash-icon" src="{{this.img}}" alt="{{this.name}}" />
                     <div class="dshideout-stash-info">
                       <span class="dshideout-stash-name">{{this.name}}</span>
-                      {{#if this.echelonLabel}}
-                        <span class="dshideout-echelon-pill">{{this.echelonLabel}}</span>
-                      {{/if}}
                     </div>
+                    <span class="dshideout-archive-col-echelon dshideout-col-value">{{this.echelonLabel}}</span>
+                    <span class="dshideout-archive-col-source dshideout-col-value" title="{{this.projectData.source}}">{{#if this.sourceLanguage}}{{this.sourceLanguage}}{{else}}—{{/if}}</span>
+                    {{#if this.hasCraftingData}}
+                      <div class="dshideout-archive-prereq-ctrl">
+                        {{#if this.projectData.prerequisites}}
+                          <span class="dshideout-prereq-text">{{this.projectData.prerequisites}}</span>
+                        {{/if}}
+                        <span class="dshideout-prereq-xn">×{{this.craftCount}}</span>
+                      </div>
+                    {{else}}
+                      <span class="dshideout-col-value dshideout-col-empty">—</span>
+                    {{/if}}
                     <div class="dshideout-archive-controls">
                       {{#if this.hasCraftingData}}
+                        {{#if @root.isGM}}
+                          <button type="button" class="dshideout-qty-btn" data-action="decreaseCraftCount"
+                                  data-archive-item-id="{{this.id}}"
+                                  title="{{localize 'DSHIDEOUT.Archives.DecreaseCraftCount'}}">−</button>
+                          <button type="button" class="dshideout-qty-btn" data-action="increaseCraftCount"
+                                  data-archive-item-id="{{this.id}}"
+                                  title="{{localize 'DSHIDEOUT.Archives.IncreaseCraftCount'}}">+</button>
+                        {{/if}}
                         <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-btn-icon dshideout-archive-craft-btn"
                                 data-action="beginCraftingFromArchive" data-archive-item-id="{{this.id}}"
-                                title="{{localize 'DSHIDEOUT.Archives.BeginCrafting'}}">
+                                title="{{#if this.craftCount}}{{localize 'DSHIDEOUT.Archives.BeginCrafting'}}{{else}}{{localize 'DSHIDEOUT.Archives.NotEnoughMaterial'}}{{/if}}"
+                                {{#unless this.craftCount}}disabled{{/unless}}>
                           <i class="fas fa-hammer"></i>
                         </button>
                       {{/if}}
@@ -266,7 +295,7 @@
                           <div class="dshideout-stash-project-meta">
                             {{#if this.projectData.goal}}<span><strong>Goal:</strong> {{this.projectData.goal}}</span>{{/if}}
                             {{#if this.projectData.prerequisites}}<span><strong>Prerequisites:</strong> {{this.projectData.prerequisites}}</span>{{/if}}
-                            {{#if this.projectData.projectSource}}<span><strong>Source Material:</strong> {{this.projectData.projectSource}}</span>{{/if}}
+                            {{#if this.projectData.source}}<span><strong>Source Material:</strong> {{this.projectData.source}}</span>{{/if}}
                           </div>
                         {{/if}}
                       </div>
@@ -289,13 +318,18 @@
 
   {{!-- ==================  STASH TAB  ================== --}}
   {{#dshideout-eq activeTab "stash"}}
-  <div class="dshideout-stash-panel" data-stash-drop-zone>
+  <div class="dshideout-stash-panel {{#if isGM}}is-gm{{else}}is-player{{/if}}" data-stash-drop-zone>
     <hr class="dshideout-divider" />
     <div class="dshideout-stash-list">
       {{#if stashGroups.length}}
         {{#each stashGroups}}
           <section class="dshideout-stash-group">
-            <h4 class="dshideout-stash-group-header">{{this.label}}</h4>
+            <div class="dshideout-stash-group-header">
+              <span class="dshideout-group-icon-spacer"></span>
+              <span class="dshideout-group-label">{{this.label}}</span>
+              <span class="dshideout-col-header-text dshideout-stash-col-echelon">{{localize "DSHIDEOUT.Column.Echelon"}}</span>
+              <span class="dshideout-col-header-text dshideout-stash-col-qty">{{localize "DSHIDEOUT.Column.Quantity"}}</span>
+            </div>
             <ul class="dshideout-stash-items">
               {{#each this.items}}
                 <li class="dshideout-stash-row {{#if this.isExpanded}}is-expanded{{/if}}"
@@ -308,16 +342,12 @@
                     <img class="dshideout-stash-icon" src="{{this.img}}" alt="{{this.name}}" />
                     <div class="dshideout-stash-info">
                       <span class="dshideout-stash-name">{{this.name}}</span>
-                      {{#if this.echelonLabel}}
-                        <span class="dshideout-echelon-pill">{{this.echelonLabel}}</span>
-                      {{/if}}
                     </div>
-                    <div class="dshideout-qty-controls">
+                    <span class="dshideout-stash-col-echelon dshideout-col-value">{{this.echelonLabel}}</span>
+                    <span class="dshideout-stash-col-qty dshideout-col-value">{{this.quantity}}</span>
+                    <div class="dshideout-stash-row-btns">
                       {{#if @root.isGM}}
                         <button type="button" class="dshideout-qty-btn" data-action="decreaseQty" data-stash-item-id="{{this.id}}">−</button>
-                      {{/if}}
-                      <span class="dshideout-qty-value">{{this.quantity}}</span>
-                      {{#if @root.isGM}}
                         <button type="button" class="dshideout-qty-btn" data-action="increaseQty" data-stash-item-id="{{this.id}}">+</button>
                         <button type="button" class="dshideout-btn dshideout-btn-danger dshideout-btn-icon"
                                 data-action="removeStashItem" data-stash-item-id="{{this.id}}"
@@ -325,11 +355,11 @@
                           <i class="fas fa-trash"></i>
                         </button>
                       {{/if}}
-                      <i class="fas fa-chevron-down dshideout-stash-expand-icon"
-                         data-action="toggleDescription"
-                         data-description-id="{{this.id}}"
-                         data-chevron-id="{{this.id}}"></i>
                     </div>
+                    <i class="fas fa-chevron-down dshideout-stash-expand-icon"
+                       data-action="toggleDescription"
+                       data-description-id="{{this.id}}"
+                       data-chevron-id="{{this.id}}"></i>
                   </div>
                   <div class="dshideout-collapsible {{#if this.isExpanded}}is-expanded{{/if}}"
                        data-collapsible-id="{{this.id}}"
@@ -360,12 +390,10 @@
         </div>
       {{/if}}
 
-      {{!-- Drop zone hint scrolls with list --}}
-      {{#if isGM}}
-        <div class="dshideout-drop-hint">
-          <i class="fas fa-plus-circle"></i> {{localize "DSHIDEOUT.Stash.DropHint"}}
-        </div>
-      {{/if}}
+      {{!-- Drop zone hint scrolls with list (visible to anyone with permission) --}}
+      <div class="dshideout-drop-hint">
+        <i class="fas fa-plus-circle"></i> {{localize "DSHIDEOUT.Stash.DropHint"}}
+      </div>
     </div>
 
   </div>

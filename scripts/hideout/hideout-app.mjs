@@ -12,8 +12,10 @@ import {
   getStash, addStashItem, removeStashItem, changeStashQuantity,
 } from "./stash-manager.mjs";
 import {
-  getArchives, addArchiveEntry, removeArchiveEntry,
+  getArchives, addArchiveEntry, removeArchiveEntry, updateArchiveEntry,
 } from "./archives-manager.mjs";
+import { extractLanguageFromSource } from "../language-helper.mjs";
+import { saveWorldSetting, hasHideoutPermission } from "../socket.mjs";
 import { ProjectBrowserApp } from "../browsers/project-browser.mjs";
 import { TreasureBrowserApp } from "../browsers/treasure-browser.mjs";
 import { CreateFollowerDialog } from "../dialogs/create-follower.mjs";
@@ -70,6 +72,8 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       // Archives
       beginCraftingFromArchive: HideoutApp.#onBeginCraftingFromArchive,
       removeArchiveEntry: HideoutApp.#onRemoveArchiveEntry,
+      increaseCraftCount: HideoutApp.#onIncreaseCraftCount,
+      decreaseCraftCount: HideoutApp.#onDecreaseCraftCount,
       // Action bar
       createFollower: HideoutApp.#onCreateFollower,
       openProjectBrowser: HideoutApp.#onOpenProjectBrowser,
@@ -145,6 +149,20 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const archiveItems = getArchives();
     const archiveGroups = await this.#buildArchiveGroups(archiveItems);
 
+    // Approximate the natural width needed for the prereq column based on
+    // the longest prerequisite text across all archive items, capped at
+    // 300px. This lets the column shrink when content is short while
+    // still wrapping multi-line when it's long.
+    let maxPrereqLen = 0;
+    for (const group of archiveGroups) {
+      for (const it of group.items) {
+        const len = (it.projectData?.prerequisites ?? "").length;
+        if (len > maxPrereqLen) maxPrereqLen = len;
+      }
+    }
+    // Heuristic: ~6.5 px per character + 50px breathing room for the ×N badge.
+    const archivePrereqWidth = Math.min(300, Math.max(80, Math.ceil(maxPrereqLen * 6.5 + 50)));
+
     return {
       isGM,
       activeTab: this.#activeTab,
@@ -154,6 +172,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       projects: await this.#enrichProjects(projects),
       stashGroups: await this.#enrichStashGroups(stashGroups),
       archiveGroups,
+      archivePrereqWidth,
       projectFilter: this.#projectFilter,
       projectSort: this.#projectSort,
       expandedDescriptions: this.#expandedDescriptions,
@@ -199,13 +218,14 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     return game.actors
       .filter(a => a.type === FOLLOWER_TYPE && rosterIds.has(a.id))
       .map(a => {
-        const mentor = a.system.retainer?.mentor ?? null;
-        const mentorName = mentor ? (game.actors.get(mentor)?.name ?? null) : null;
+        // mentor is a ForeignDocumentField — resolves to the Actor document, not an ID string
+        const mentorActor = a.system.retainer?.mentor ?? null;
+        const mentorName = mentorActor?.name ?? null;
         const contributingProject = getContributingProject(a.id);
 
         const isGM = game.user.isGM;
-        const isMentor = mentor && game.user.character?.id === mentor;
-        const isUnassigned = !mentor;
+        const isMentor = mentorActor && game.user.character === mentorActor;
+        const isUnassigned = !mentorActor;
 
         const reason = a.system.characteristics?.reason?.value ?? 0;
         const reasonStr = reason >= 0 ? `+${reason}` : `${reason}`;
@@ -221,7 +241,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
           name: a.name,
           img: a.img,
           uuid: a.uuid,
-          mentorId: mentor,
+          mentorId: mentorActor?.id ?? null,
           mentorName,
           isDraggable: isGM || isMentor || isUnassigned,
           isGMOrOwner: isGM || a.isOwner,
@@ -265,13 +285,13 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const ids = HideoutApp.#getRosterFollowerIds();
     if (!ids.includes(actorId)) {
       ids.push(actorId);
-      await game.settings.set(MODULE_ID, SETTINGS.FOLLOWERS, JSON.stringify(ids));
+      await saveWorldSetting(SETTINGS.FOLLOWERS, JSON.stringify(ids));
     }
   }
 
   static async #removeFollowerFromRoster(actorId) {
     const ids = HideoutApp.#getRosterFollowerIds().filter(id => id !== actorId);
-    await game.settings.set(MODULE_ID, SETTINGS.FOLLOWERS, JSON.stringify(ids));
+    await saveWorldSetting(SETTINGS.FOLLOWERS, JSON.stringify(ids));
   }
 
   #filterAndSortProjects(projects) {
@@ -320,7 +340,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
       const isExpanded = this.#expandedDescriptions.has(p.id);
       const description = p.description
-        ? await TextEditor.enrichHTML(p.description, { async: true }).catch(() => p.description)
+        ? await foundry.applications.ux.TextEditor.implementation.enrichHTML(p.description, { async: true }).catch(() => p.description)
         : p.description;
 
       return {
@@ -336,6 +356,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
         contributors,
         description,
         isExpanded,
+        yieldText: p.yieldDisplay || p.yieldAmount || "",
         canObtainYield: p.completed && p.yieldItemUuid && !p.yieldObtained,
         canRestart: p.completed && !p.yieldItemUuid,
         yieldAlreadyObtained: p.yieldObtained,
@@ -374,7 +395,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         // Always enrich description (content is always rendered, just hidden)
         if (item.description) {
-          item.description = await TextEditor.enrichHTML(item.description, { async: true })
+          item.description = await foundry.applications.ux.TextEditor.implementation.enrichHTML(item.description, { async: true })
             .catch(() => item.description);
         }
 
@@ -416,13 +437,15 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       if (!groups[cat]) groups[cat] = { key: cat, label: this.#stashGroupLabel(cat), items: [] };
       let description = item.description;
       if (description) {
-        description = await TextEditor.enrichHTML(description, { async: true }).catch(() => description);
+        description = await foundry.applications.ux.TextEditor.implementation.enrichHTML(description, { async: true }).catch(() => description);
       }
       groups[cat].items.push({
         ...item,
         isExpanded: this.#expandedDescriptions.has(item.id),
         echelonLabel: item.echelon ? `E${item.echelon}` : "",
         description,
+        craftCount: item.craftCount ?? 0,
+        sourceLanguage: extractLanguageFromSource(item.projectData?.source),
       });
     }
 
@@ -585,7 +608,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Item drop zone (add to stash from sidebar or canvas) — only GMs can add
     const stashZone = el.querySelector("[data-stash-drop-zone]");
-    if (stashZone && game.user.isGM) {
+    if (stashZone && hasHideoutPermission()) {
       stashZone.addEventListener("dragover", (e) => {
         // Reject drags that originated from our own stash (prevent disappear-on-drop-back)
         if (e.dataTransfer.types.includes("application/x-dshideout-stash")) return;
@@ -706,6 +729,11 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const projectId = zone.dataset.projectDropZone;
     if (!projectId) return;
 
+    if (!hasHideoutPermission()) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Permission.Denied"));
+      return;
+    }
+
     let dragData;
     try {
       dragData = JSON.parse(
@@ -725,9 +753,10 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!isGM) {
       // Players can only drag their own character or their mentored/unassigned followers
       const isOwnHero = actor.type === "hero" && game.user.character?.id === actor.id;
-      const mentorId = actor.system.retainer?.mentor;
-      const isMentoredByUser = actor.type === FOLLOWER_TYPE && mentorId && game.user.character?.id === mentorId;
-      const isUnassigned = actor.type === FOLLOWER_TYPE && !mentorId;
+      // mentor is a ForeignDocumentField — resolves to the Actor document, not an ID string
+      const mentorActor = actor.system.retainer?.mentor;
+      const isMentoredByUser = actor.type === FOLLOWER_TYPE && mentorActor && game.user.character === mentorActor;
+      const isUnassigned = actor.type === FOLLOWER_TYPE && !mentorActor;
       if (!isOwnHero && !isMentoredByUser && !isUnassigned) {
         ui.notifications.warn("You can only assign your own hero or your followers.");
         return;
@@ -754,8 +783,8 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async #onDropItemToStash(event) {
     event.preventDefault();
-    if (!game.user.isGM) {
-      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Stash.PlayerCannotAdd"));
+    if (!hasHideoutPermission()) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Permission.Denied"));
       return;
     }
 
@@ -1089,13 +1118,12 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const project = projects.find(p => p.id === projectId);
     if (!project?.yieldItemUuid) return;
 
-    // Animate the button sliding out before re-rendering
+    // Animate the button sliding out before the next render replaces it
     const yieldBtn = this.element?.querySelector(
       `[data-action="obtainYield"][data-project-id="${projectId}"]`
     );
     if (yieldBtn) {
       yieldBtn.classList.add("dshideout-yield-sliding-out");
-      await new Promise(r => setTimeout(r, 330));
     }
 
     const yieldItem = await fromUuid(project.yieldItemUuid);
@@ -1213,8 +1241,8 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onBeginCraftingFromArchive(event, target) {
-    if (!game.user.isGM) {
-      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Archives.PlayerCannotAdd"));
+    if (!hasHideoutPermission()) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Permission.Denied"));
       return;
     }
     const itemId = target.dataset.archiveItemId;
@@ -1227,6 +1255,12 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       return;
     }
 
+    const craftCount = entry.craftCount ?? 0;
+    if (craftCount <= 0) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Archives.NotEnoughMaterial"));
+      return;
+    }
+
     const item = await fromUuid(entry.uuid).catch(() => null);
     if (!item) {
       ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Transfer.SourceMissing"));
@@ -1234,8 +1268,32 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     await this._addTreasureAsProject(item);
+    // Decrement craftCount after successfully starting the project
+    await updateArchiveEntry(itemId, { craftCount: craftCount - 1 });
     // Switch to projects tab after starting the project
     this.#activeTab = "projects";
+    this.render({ parts: ["main"] });
+  }
+
+  static async #onIncreaseCraftCount(event, target) {
+    if (!game.user.isGM) return;
+    const itemId = target.dataset.archiveItemId;
+    const archives = getArchives();
+    const entry = archives.find(i => i.id === itemId);
+    if (!entry) return;
+    await updateArchiveEntry(itemId, { craftCount: (entry.craftCount ?? 0) + 1 });
+    this.render({ parts: ["main"] });
+  }
+
+  static async #onDecreaseCraftCount(event, target) {
+    if (!game.user.isGM) return;
+    const itemId = target.dataset.archiveItemId;
+    const archives = getArchives();
+    const entry = archives.find(i => i.id === itemId);
+    if (!entry) return;
+    const current = entry.craftCount ?? 0;
+    if (current <= 0) return;
+    await updateArchiveEntry(itemId, { craftCount: current - 1 });
     this.render({ parts: ["main"] });
   }
 
@@ -1266,6 +1324,10 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onProgressProjects(event, target) {
+    if (!hasHideoutPermission()) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Permission.Denied"));
+      return;
+    }
     const dialog = new ProgressProjectsDialog({ hideoutApp: this });
     await dialog.render({ force: true });
   }

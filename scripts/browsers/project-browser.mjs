@@ -212,7 +212,7 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
 
     // Enrich description for selected entry
     if (selectedEntry?.description) {
-      selectedEntry.description = await TextEditor.enrichHTML(selectedEntry.description, { async: true })
+      selectedEntry.description = await foundry.applications.ux.TextEditor.implementation.enrichHTML(selectedEntry.description, { async: true })
         .catch(() => selectedEntry.description);
     }
 

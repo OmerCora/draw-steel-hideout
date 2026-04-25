@@ -7,6 +7,7 @@
  */
 
 import { MODULE_ID, SETTINGS } from "../config.mjs";
+import { saveWorldSetting } from "../socket.mjs";
 
 // ── Typedefs ──────────────────────────────────────────────────────────────────
 
@@ -47,7 +48,7 @@ function _loadProjects() {
 
 /** @param {HideoutProject[]} projects */
 async function _saveProjects(projects) {
-  await game.settings.set(MODULE_ID, SETTINGS.PROJECTS, JSON.stringify(projects));
+  await saveWorldSetting(SETTINGS.PROJECTS, JSON.stringify(projects));
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -67,9 +68,6 @@ export function getProjects() {
  */
 export async function addProject(itemData) {
   const projects = _loadProjects();
-
-  // Deduplicate by UUID
-  if (projects.some(p => p.uuid === itemData.uuid)) return null;
 
   /** @type {HideoutProject} */
   const project = {

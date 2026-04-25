@@ -51,14 +51,14 @@
                 <i class="fas fa-times"></i>
               </button>
             {{/if}}
-            {{#if this.contributingProjectId}}
-              <span class="dshideout-contributing-badge" title="{{this.contributingProjectName}}">
-                <i class="fas fa-hammer"></i>
-              </span>
-            {{/if}}
             {{#if this.mentorName}}
               <span class="dshideout-mentor-badge" title="{{localize 'DSHIDEOUT.Roster.Mentor'}}: {{this.mentorName}}">
                 <i class="fas fa-user-shield"></i>
+              </span>
+            {{/if}}
+            {{#if this.contributingProjectId}}
+              <span class="dshideout-contributing-badge" title="{{this.contributingProjectName}}">
+                <i class="fas fa-hammer"></i>
               </span>
             {{/if}}
           </li>

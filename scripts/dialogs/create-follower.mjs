@@ -56,6 +56,9 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
     dialog: {
       template: `modules/${MODULE_ID}/templates/dialogs/create-follower.hbs`,
     },
+    footer: {
+      template: `modules/${MODULE_ID}/templates/dialogs/create-follower-footer.hbs`,
+    },
   };
 
   /** @type {null | "artisan" | "sage"} */

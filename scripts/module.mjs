@@ -8,6 +8,7 @@ import { registerFollowerModel } from "./data-models/follower-model.mjs";
 import { getFollowerSheetClass } from "./sheets/follower-sheet.mjs";
 import { HideoutApp } from "./hideout/hideout-app.mjs";
 import { getStash, removeStashItem, changeStashQuantity } from "./hideout/stash-manager.mjs";
+import { registerSocket, HIDEOUT_SETTING_KEYS } from "./socket.mjs";
 
 /* -------------------------------------------------- */
 /*  Init                                              */
@@ -43,6 +44,21 @@ Hooks.once("init", () => {
     default: "[]",
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.MINIMUM_ROLE, {
+    name: "DSHIDEOUT.Settings.MinimumRole.Name",
+    hint: "DSHIDEOUT.Settings.MinimumRole.Hint",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: CONST.USER_ROLES.PLAYER,
+    choices: {
+      [CONST.USER_ROLES.PLAYER]: "USER.RolePlayer",
+      [CONST.USER_ROLES.TRUSTED]: "USER.RoleTrusted",
+      [CONST.USER_ROLES.ASSISTANT]: "USER.RoleAssistant",
+      [CONST.USER_ROLES.GAMEMASTER]: "USER.RoleGamemaster",
+    },
+  });
+
   // Register Follower data model
   registerFollowerModel();
 
@@ -54,6 +70,7 @@ Hooks.once("init", () => {
     `modules/${MODULE_ID}/templates/browsers/project-browser.hbs`,
     `modules/${MODULE_ID}/templates/browsers/treasure-browser.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/create-follower.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/create-follower-footer.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/progress-projects.hbs`,
     // Follower actor sheet templates
     `modules/${MODULE_ID}/templates/sheets/follower-sheet/stats.hbs`,
@@ -73,6 +90,9 @@ Hooks.once("init", () => {
 Hooks.once("ready", () => {
   // Expose public API
   game.modules.get(MODULE_ID).api = { HideoutApp };
+
+  // Register socket relay so non-GM clients can write world settings via the GM.
+  registerSocket();
 
   // Build and register the custom FollowerSheet.
   // Must be done in `ready` so DrawSteelRetainerSheet is already in the registry.
@@ -141,6 +161,32 @@ Hooks.on("deleteActor", (actor) => _reRosterIfOpen(actor));
 Hooks.on("updateActor", (actor) => _reRosterIfOpen(actor));
 
 /* -------------------------------------------------- */
+/*  Re-render on remote setting changes               */
+/* -------------------------------------------------- */
+
+// Foundry fires `updateSetting` on EVERY client whenever a setting is
+// changed (including world settings written by another client). We listen
+// for our own settings and fan out to `dshideout:refresh` so all open
+// HideoutApp windows re-render with the latest data — GM, originating
+// player, and any observers all stay in sync without custom acks.
+Hooks.on("updateSetting", (setting) => {
+  // setting.key is namespaced as "<moduleId>.<settingKey>"
+  const fullKey = setting?.key ?? "";
+  const dotIdx = fullKey.indexOf(".");
+  if (dotIdx < 0) return;
+  const namespace = fullKey.slice(0, dotIdx);
+  const settingKey = fullKey.slice(dotIdx + 1);
+  if (namespace !== MODULE_ID) return;
+  if (!HIDEOUT_SETTING_KEYS.has(settingKey)) return;
+  Hooks.callAll("dshideout:refresh");
+});
+
+Hooks.on("dshideout:refresh", () => {
+  if (!HideoutApp._instance?.rendered) return;
+  HideoutApp._instance.render({ parts: ["roster", "main"] });
+});
+
+/* -------------------------------------------------- */
 /*  Stash → Hero transfer (actor sheet & canvas)      */
 /* -------------------------------------------------- */
 
@@ -185,7 +231,35 @@ async function _handleStashDropOnActor(actor, stashId) {
   }
 
   const maxQty = stashItem.quantity ?? 1;
-  const transferQty = 1; // external drops always transfer 1
+  let transferQty = 1;
+  if (maxQty > 1) {
+    let chosen = null;
+    await foundry.applications.api.DialogV2.wait({
+      window: { title: game.i18n.format("DSHIDEOUT.Transfer.PromptTitle", { item: stashItem.name }) },
+      content: `
+        <form class="standard-form">
+          <div class="form-group">
+            <label>${game.i18n.format("DSHIDEOUT.Transfer.HowMany", { item: stashItem.name, target: actor.name, max: maxQty })}</label>
+            <input type="number" name="quantity" value="1" min="1" max="${maxQty}" style="width:100%" autofocus />
+          </div>
+        </form>
+      `,
+      buttons: [
+        {
+          action: "ok",
+          label: game.i18n.localize("DSHIDEOUT.Transfer.Confirm"),
+          default: true,
+          callback: (event, button, dialog) => {
+            const val = parseInt(dialog.element.querySelector("[name='quantity']").value);
+            chosen = Math.max(1, Math.min(maxQty, isNaN(val) ? 1 : val));
+          },
+        },
+        { action: "cancel", label: game.i18n.localize("Cancel") },
+      ],
+    });
+    if (!chosen) return; // cancelled
+    transferQty = chosen;
+  }
 
   // Merge quantity if actor already owns the same item (consumables)
   const existingItem = actor.items.find(i => {

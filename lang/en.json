@@ -170,6 +170,14 @@
   "DSHIDEOUT.Transfer.SourceMissing": "Source item no longer exists in the world.",
   "DSHIDEOUT.Transfer.DoneToHero": "Transferred {qty}× {item} to {hero}.",
 
+  "DSHIDEOUT.Column.Echelon": "Echelon",
+  "DSHIDEOUT.Column.Quantity": "Quantity",
+  "DSHIDEOUT.Column.Source": "Source",
+  "DSHIDEOUT.Column.Prerequisite": "Prerequisites",
+  "DSHIDEOUT.Archives.NotEnoughMaterial": "Ask the GM to mark this recipe as available before starting a crafting project.",
+  "DSHIDEOUT.Archives.IncreaseCraftCount": "Increase available crafts",
+  "DSHIDEOUT.Archives.DecreaseCraftCount": "Decrease available crafts",
+
   "DSHIDEOUT.Chat.Alias": "Hideout",
   "DSHIDEOUT.Chat.YieldObtained": "Yield Obtained",
   "DSHIDEOUT.Chat.YieldObtainedMsg": "{qty}× <strong>{item}</strong> added to the party stash from project <em>{project}</em>.",
@@ -185,5 +193,10 @@
   "DSHIDEOUT.Archives.ItemAdded": "\u201c{name}\u201d added to the archives.",
   "DSHIDEOUT.Archives.AlreadyAdded": "\u201c{name}\u201d is already in the archives.",
   "DSHIDEOUT.Archives.NoCraftingData": "This item has no crafting project data.",
-  "DSHIDEOUT.Archives.PlayerCannotAdd": "Only the Gamemaster can add items to the archives."
+  "DSHIDEOUT.Archives.PlayerCannotAdd": "Only the Gamemaster can add items to the archives.",
+
+  "DSHIDEOUT.Settings.MinimumRole.Name": "Minimum Role for Player Operations",
+  "DSHIDEOUT.Settings.MinimumRole.Hint": "The minimum user role required to assign contributors to projects and roll project progress. Set to Gamemaster to restrict all writes to the GM only.",
+
+  "DSHIDEOUT.Permission.Denied": "You do not have permission to perform this action."
 }

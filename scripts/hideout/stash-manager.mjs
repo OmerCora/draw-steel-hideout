@@ -6,6 +6,7 @@
  */
 
 import { MODULE_ID, SETTINGS } from "../config.mjs";
+import { saveWorldSetting } from "../socket.mjs";
 
 // ── Typedefs ──────────────────────────────────────────────────────────────────
 
@@ -35,7 +36,7 @@ function _loadStash() {
 
 /** @param {StashItem[]} items */
 async function _saveStash(items) {
-  await game.settings.set(MODULE_ID, SETTINGS.STASH, JSON.stringify(items));
+  await saveWorldSetting(SETTINGS.STASH, JSON.stringify(items));
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
