@@ -1,0 +1,1920 @@
+/* ============================================================
+   Draw Steel – Hideout Module Styles
+   All selectors namespaced under .draw-steel-hideout
+   ============================================================ */
+
+/* ─── Window Layout ─────────────────────────────────────────── */
+
+.draw-steel-hideout .window-content {
+  display: grid;
+  grid-template-columns: 1fr 4fr;
+  grid-template-rows: 1fr auto;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Constrain the window's minimum resize boundaries */
+#draw-steel-hideout {
+  min-width: 800px !important;
+  min-height: 500px !important;
+}
+
+/* ─── Roster (left column) ──────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-roster {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  border-right: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(128, 128, 128, 0.05);
+  min-width: 150px;
+}
+
+.draw-steel-hideout .dshideout-roster-section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Heroes section: takes only as much height as its content needs */
+.draw-steel-hideout .dshideout-roster-section:first-child {
+  flex: 0 0 auto;
+  max-height: 55%;
+  overflow: hidden;
+  min-height: 40px;
+}
+
+/* Followers section: fills remaining space below heroes */
+.draw-steel-hideout .dshideout-roster-section:last-child {
+  flex: 1;
+  min-height: 50px;
+}
+
+.draw-steel-hideout .dshideout-roster-heading {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+  padding: 6px 8px 6px;
+  margin: 0;
+}
+
+.draw-steel-hideout .dshideout-roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 2px 4px 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.draw-steel-hideout .dshideout-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: grab;
+  transition: background 0.1s;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+}
+
+.draw-steel-hideout .dshideout-roster-row:hover {
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.draw-steel-hideout .dshideout-roster-row.is-contributing {
+  border-color: rgba(var(--color-warm-1), 0.4);
+  background: rgba(var(--color-warm-1), 0.05);
+}
+
+.draw-steel-hideout .dshideout-portrait {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-roster-name {
+  font-size: 0.82rem;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draw-steel-hideout .dshideout-contributing-badge,
+.draw-steel-hideout .dshideout-mentor-badge {
+  font-size: 0.65rem;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-roster-empty {
+  font-size: 0.75rem;
+  opacity: 0.55;
+  padding: 6px 10px;
+  margin: 0;
+}
+
+/* Hero drop zone (receives stash item drags) */
+.draw-steel-hideout .dshideout-roster-heroes .dshideout-roster-row.drag-over {
+  border-color: color-mix(in srgb, var(--color-warm-2, #c0843a) 60%, transparent);
+  background: color-mix(in srgb, var(--color-warm-2, #c0843a) 10%, transparent);
+  outline: 2px dashed color-mix(in srgb, var(--color-warm-2, #c0843a) 50%, transparent);
+}
+
+/* Follower X (remove) button */
+.draw-steel-hideout .dshideout-roster-remove-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: opacity 0.1s, color 0.1s;
+}
+
+.draw-steel-hideout .dshideout-roster-row:hover .dshideout-roster-remove-btn {
+  opacity: 0.5;
+}
+
+.draw-steel-hideout .dshideout-roster-remove-btn:hover {
+  opacity: 1 !important;
+  color: var(--color-negative, #f44336);
+}
+
+/* Follower tooltip: multi-line via <br> in data-tooltip (Foundry uses innerHTML for tooltip text) */
+#tooltip.draw-steel-hideout-tooltip {
+  line-height: 1.6;
+}
+
+/* Add follower select row */
+.draw-steel-hideout .dshideout-add-follower-row {
+  padding: 4px 6px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.draw-steel-hideout .dshideout-add-follower-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.65;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.draw-steel-hideout .dshideout-add-follower-select {
+  width: 100%;
+  font-size: 0.75rem;
+}
+
+/* Follower skills section injected into retainer sheet biography tab */
+.dshideout-follower-skills-section {
+  border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+}
+
+.dshideout-skills-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.dshideout-skills-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dshideout-skill-group {
+  min-width: 140px;
+  flex: 1;
+}
+
+.dshideout-skill-group-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+  margin: 0 0 4px;
+}
+
+.dshideout-skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dshideout-skill-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.dshideout-skill-label input[type="checkbox"] {
+  flex-shrink: 0;
+}
+
+/* ─── Main panel ────────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-main {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Tabs ──────────────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.draw-steel-hideout .dshideout-tab-btn {
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  padding: 4px 14px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.draw-steel-hideout .dshideout-tab-btn.active {
+  background: rgba(128, 128, 128, 0.2);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.draw-steel-hideout .dshideout-tab-btn:hover:not(.active) {
+  opacity: 0.9;
+}
+
+/* ─── Projects panel ────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-projects-panel,
+.draw-steel-hideout .dshideout-stash-panel,
+.draw-steel-hideout .dshideout-archives-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  padding: 8px;
+  gap: 8px;
+}
+
+/* ─── Archives list ──────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-archives-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  margin-top: -8px;
+}
+
+.draw-steel-hideout .dshideout-archive-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Orange hammer button for "Begin Crafting Project" */
+.draw-steel-hideout .dshideout-archive-craft-btn {
+  color: var(--color-warm-2, #c0843a) !important;
+  border-color: color-mix(in srgb, var(--color-warm-2, #c0843a) 50%, transparent) !important;
+}
+
+.draw-steel-hideout .dshideout-archive-craft-btn:hover {
+  background: color-mix(in srgb, var(--color-warm-2, #c0843a) 18%, transparent) !important;
+}
+
+.draw-steel-hideout .dshideout-projects-controls {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Divider below filter/sort bar and at top of stash panel */
+.draw-steel-hideout .dshideout-divider {
+  border: none;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-drop-hint {
+  border: 2px dashed color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 6px;
+  padding: 8px 14px;
+  text-align: center;
+  font-size: 0.78rem;
+  opacity: 0.55;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.draw-steel-hideout .dshideout-projects-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  scrollbar-gutter: stable;
+  margin-top: -8px;
+}
+
+.draw-steel-hideout .dshideout-project-row {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 6px;
+  padding: 8px;
+  background: rgba(128, 128, 128, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s;
+}
+
+.draw-steel-hideout .dshideout-project-row.is-completed {
+  border-color: color-mix(in srgb, var(--color-positive, #4caf50) 55%, transparent);
+  border-width: 2px;
+}
+
+.draw-steel-hideout .dshideout-project-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ─── New top bar layout ────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-project-topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Right-side: trash + chevron always visible */
+.draw-steel-hideout .dshideout-project-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* Buttons inlined in topbar (yield/restart) — smaller */
+.draw-steel-hideout .dshideout-topbar-action {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+/* Body: left column + divider + right column */
+.draw-steel-hideout .dshideout-project-body {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  padding-top: 8px;
+  margin-top: 2px;
+}
+
+.draw-steel-hideout .dshideout-project-topbar {
+  cursor: pointer;
+  user-select: none;
+}
+
+.draw-steel-hideout .dshideout-project-left {
+  flex: 0 0 50%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 10px;
+  border-right: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.draw-steel-hideout .dshideout-project-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 10px;
+}
+
+/* Icon wrapper: relative so book button can overlay */
+.draw-steel-hideout .dshideout-project-icon-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+/* Left column: icon on top, type+rolls below — kept for legacy compat */
+.draw-steel-hideout .dshideout-project-icon-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+/* Book icon: overlaid on top of the icon image */
+.draw-steel-hideout .dshideout-open-sheet-btn {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  opacity: 0;
+  font-size: 0.85rem;
+  padding: 0;
+  border-radius: 4px;
+  transition: opacity 0.12s;
+  line-height: 1;
+}
+
+.draw-steel-hideout .dshideout-project-row:hover .dshideout-open-sheet-btn {
+  opacity: 0.7;
+}
+
+.draw-steel-hideout .dshideout-open-sheet-btn:hover {
+  opacity: 1 !important;
+}
+
+.draw-steel-hideout .dshideout-project-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Title block: kept for compatibility but no longer used in template */
+.draw-steel-hideout .dshideout-project-title-block {
+  display: none;
+}
+
+.draw-steel-hideout .dshideout-project-name {
+  font-weight: 700;
+  font-size: 1.4rem;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.draw-steel-hideout .dshideout-completed-badge {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-positive, #4caf50);
+  opacity: 0.85;
+  vertical-align: middle;
+}
+
+/* No longer used but kept for compatibility */
+.draw-steel-hideout .dshideout-project-header-text {
+  display: none;
+}
+
+.draw-steel-hideout .dshideout-project-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.draw-steel-hideout .dshideout-project-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.draw-steel-hideout .dshideout-meta-label {
+  font-size: 0.78rem;
+  opacity: 0.55;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ─── Pills & labels ───────────────────────────────────────── */
+
+/* Plain type label (no pill border/background) */
+.draw-steel-hideout .dshideout-type-label {
+  font-size: 0.93rem;
+  font-weight: 500;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-type-pill,
+.draw-steel-hideout .dshideout-char-pill,
+.draw-steel-hideout .dshideout-echelon-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(128, 128, 128, 0.12);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-goal-pill {
+  font-size: 0.7rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-expand-icon {
+  font-size: 0.7rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* Trash button: always visible (dim, brightens on hover) */
+.draw-steel-hideout .dshideout-project-remove-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.35;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  line-height: 1;
+  border-radius: 3px;
+  transition: opacity 0.1s, color 0.1s;
+}
+
+.draw-steel-hideout .dshideout-project-remove-btn:hover {
+  opacity: 1;
+  color: var(--color-negative, #f44336);
+}
+
+/* ─── Progress bar ──────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-progress-bar-container {
+  position: relative;
+  height: 24px;
+  background: rgba(128, 128, 128, 0.2);
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-warm-2, #c0843a) 40%, transparent);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.draw-steel-hideout .dshideout-progress-bar {
+  height: 100%;
+  background: color-mix(in srgb, var(--color-warm-2, #c0843a) 80%, currentColor);
+  border-radius: 11px;
+  transition: width 0.5s ease-out;
+}
+
+/* Diagonal-stripe bar for projects with no goal set */
+.draw-steel-hideout .dshideout-bar-no-goal {
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--color-warm-2, #c0843a) 55%, currentColor) 0px,
+    color-mix(in srgb, var(--color-warm-2, #c0843a) 55%, currentColor) 7px,
+    rgba(128, 128, 128, 0.18) 7px,
+    rgba(128, 128, 128, 0.18) 14px
+  );
+}
+
+.draw-steel-hideout .dshideout-progress-bar[data-animate] {
+  animation: dshideout-bar-fill 0.45s ease-out;
+}
+
+@keyframes dshideout-bar-fill {
+  from { width: 0%; }
+}
+
+/* Yield button fade-out animation */
+@keyframes dshideout-yield-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.draw-steel-hideout .dshideout-yield-sliding-out {
+  animation: dshideout-yield-fade-out 0.3s ease-in forwards;
+  pointer-events: none;
+}
+
+.draw-steel-hideout .dshideout-project-row.is-completed .dshideout-progress-bar {
+  background: color-mix(in srgb, var(--color-positive, #4caf50) 70%, currentColor);
+}
+
+/* Breakthrough indicator badge in progress chat */
+.draw-steel-hideout .dshideout-breakthrough-badge,
+.dshideout-progress-chat .dshideout-breakthrough-badge {
+  color: var(--color-warm-2, #c0843a);
+  font-size: 1.1em;
+  cursor: help;
+}
+
+/* ─── GM Project Points Editor ──────────────────────────────── */
+
+.draw-steel-hideout .dshideout-points-edit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.draw-steel-hideout .dshideout-points-edit-label {
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.draw-steel-hideout .dshideout-points-input,
+.draw-steel-hideout .dshideout-goal-input {
+  width: 48px;
+  padding: 0 4px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  background: rgba(128, 128, 128, 0.1);
+  color: inherit;
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+.draw-steel-hideout .dshideout-points-of {
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+
+.draw-steel-hideout .dshideout-progress-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  mix-blend-mode: normal;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65), 0 0 6px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+/* Mini bar (used in progress dialog) */
+.draw-steel-hideout .dshideout-mini-progress-bar {
+  height: 6px;
+  background: rgba(128, 128, 128, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.draw-steel-hideout .dshideout-mini-bar-fill {
+  height: 100%;
+  background: color-mix(in srgb, var(--color-warm-2, #c0843a) 80%, currentColor);
+  border-radius: 3px;
+}
+
+/* ─── Contributors ───────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-contributors-section {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.draw-steel-hideout .dshideout-contributors-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.55;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.draw-steel-hideout .dshideout-contributors {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  flex: 1;
+  min-height: 80px;
+  padding: 4px 4px;
+  border: 1px dashed color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 4px;
+  align-content: start;
+  transition: border-color 0.1s, background 0.1s;
+}
+
+.draw-steel-hideout .dshideout-contributors.drag-over {
+  border-color: color-mix(in srgb, var(--color-warm-2, #c0843a) 60%, transparent);
+  background: color-mix(in srgb, var(--color-warm-2, #c0843a) 5%, transparent);
+}
+
+.draw-steel-hideout .dshideout-contributor-pill {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  padding: 6px 2px 4px;
+  border-radius: 5px;
+  background: rgba(128, 128, 128, 0.15);
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  font-size: 0.75rem;
+  cursor: grab;
+  min-width: 0;
+  max-width: calc(100% - 0px);
+  min-height: 54px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.draw-steel-hideout .dshideout-contributor-pill:active {
+  cursor: grabbing;
+}
+
+.draw-steel-hideout .dshideout-contributor-portrait {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.draw-steel-hideout .dshideout-contributor-name {
+  font-size: 0.67rem;
+  line-height: 1.15;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+/* Portrait in progress dialog gets a 1px border */
+.draw-steel-hideout .dshideout-progress-portrait {
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.draw-steel-hideout .dshideout-remove-contributor {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+  font-size: 0.65rem;
+  padding: 1px 2px;
+  line-height: 1;
+  color: inherit;
+  transition: opacity 0.1s;
+  border-radius: 2px;
+}
+
+.draw-steel-hideout .dshideout-contributor-pill:hover .dshideout-remove-contributor {
+  opacity: 0.55;
+}
+
+.draw-steel-hideout .dshideout-remove-contributor:hover {
+  opacity: 1 !important;
+  color: var(--color-negative, #f44336);
+}
+
+.draw-steel-hideout .dshideout-contributors-hint {
+  font-size: 0.72rem;
+  opacity: 0.5;
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4px 0;
+}
+
+/* ─── Project actions row ───────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-project-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.draw-steel-hideout .dshideout-project-description {
+  font-size: 0.82rem;
+  opacity: 0.85;
+  padding: 4px 6px;
+}
+
+/* ─── Collapsible animation ──────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.draw-steel-hideout .dshideout-collapsible.is-expanded {
+  grid-template-rows: 1fr;
+}
+
+.draw-steel-hideout .dshideout-collapsible.no-transition {
+  transition: none;
+}
+
+.draw-steel-hideout .dshideout-collapsible-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Project description collapsible content */
+.draw-steel-hideout .dshideout-collapsible > .dshideout-project-description {
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.draw-steel-hideout .dshideout-prerequisites {
+  font-size: 0.78rem;
+  opacity: 0.75;
+}
+
+.draw-steel-hideout .dshideout-event-icon {
+  color: var(--color-warm-2, #c0843a);
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-yield-obtained {
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+
+/* ─── Stash panel ───────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-stash-list {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scrollbar-gutter: stable;
+  margin-top: -8px;
+}
+
+.draw-steel-hideout .dshideout-stash-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.draw-steel-hideout .dshideout-stash-row-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.draw-steel-hideout .dshideout-stash-group-header {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  opacity: 0.6;
+  margin: 0 0 0;
+  padding: 0 4px 2px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+}
+
+.draw-steel-hideout .dshideout-stash-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.draw-steel-hideout .dshideout-stash-row {
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  background: rgba(128, 128, 128, 0.04);
+  cursor: grab;
+  overflow: hidden; /* clips collapsible bleed at the border-radius edge */
+}
+
+.draw-steel-hideout .dshideout-stash-row:active {
+  cursor: grabbing;
+}
+
+.draw-steel-hideout .dshideout-stash-row.is-expanded {
+  border-color: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.draw-steel-hideout .dshideout-stash-row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+}
+
+.draw-steel-hideout .dshideout-stash-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-stash-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  user-select: none;
+}
+
+/* Stash expand chevron: lives AFTER qty-controls, far right */
+.draw-steel-hideout .dshideout-stash-expand-icon {
+  font-size: 0.65rem;
+  opacity: 0.4;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.draw-steel-hideout .dshideout-stash-expanded {
+  padding: 6px 10px 8px;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.45;
+}
+
+/* Separator appears on the header only when the collapsible is expanded */
+.draw-steel-hideout .dshideout-stash-row-header:has(~ .dshideout-collapsible.is-expanded) {
+  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+/* Ensure stash row has fixed collapsed height when not expanded */
+.draw-steel-hideout .dshideout-stash-row-header {
+  min-height: 36px;
+}
+
+.draw-steel-hideout .dshideout-stash-project-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 5px;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.draw-steel-hideout .dshideout-stash-name {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draw-steel-hideout .dshideout-qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-qty-btn {
+  width: 26px;
+  height: 26px !important;
+  min-height: 0 !important;
+  max-height: 26px;
+  box-sizing: border-box;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(128, 128, 128, 0.1);
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+}
+
+.draw-steel-hideout .dshideout-qty-btn:hover {
+  background: rgba(128, 128, 128, 0.25);
+}
+
+.draw-steel-hideout .dshideout-qty-value {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* ─── Action bar ────────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-action-bar {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(128, 128, 128, 0.06);
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(128, 128, 128, 0.1);
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background 0.12s;
+}
+
+.draw-steel-hideout .dshideout-action-btn:hover:not(:disabled) {
+  background: rgba(128, 128, 128, 0.2);
+}
+
+.draw-steel-hideout .dshideout-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.draw-steel-hideout .dshideout-action-btn-primary {
+  border-color: color-mix(in srgb, var(--color-warm-2, #c0843a) 50%, transparent);
+  background: rgba(var(--color-warm-2, 192 132 58), 0.12);
+}
+
+/* ─── Buttons ───────────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(128, 128, 128, 0.1);
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: inherit;
+  transition: background 0.1s;
+}
+
+.draw-steel-hideout .dshideout-btn:hover:not(:disabled) {
+  background: rgba(128, 128, 128, 0.2);
+}
+
+.draw-steel-hideout .dshideout-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.draw-steel-hideout .dshideout-btn-primary {
+  border-color: color-mix(in srgb, var(--color-warm-2, #c0843a) 50%, transparent);
+}
+
+.draw-steel-hideout .dshideout-btn-secondary {
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.draw-steel-hideout .dshideout-btn-danger {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.draw-steel-hideout .dshideout-btn-danger:hover:not(:disabled) {
+  opacity: 1;
+  border-color: color-mix(in srgb, red 50%, transparent);
+}
+
+.draw-steel-hideout .dshideout-btn-icon {
+  padding: 0;
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* Orange hammer indicator for stash items with crafting project data */
+.draw-steel-hideout .dshideout-craft-indicator {
+  color: var(--color-warm-2, #c0843a);
+  font-size: 0.72rem;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+/* Drop-hint inside project list */
+.draw-steel-hideout .dshideout-drop-hint-li {
+  list-style: none;
+}
+
+.draw-steel-hideout .dshideout-btn-large {
+  padding: 8px 20px;
+  font-size: 0.9rem;
+}
+
+.draw-steel-hideout .dshideout-btn-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* ─── Select ────────────────────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-select {
+  background-color: field;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 4px;
+  padding: 3px 32px 3px 8px;
+  font-size: 0.82rem;
+  color: field-text;
+  color-scheme: inherit;
+}
+
+.draw-steel-hideout .dshideout-small-select {
+  font-size: 0.75rem;
+  padding: 2px 24px 2px 6px;
+}
+
+/* ─── Source filter chips ───────────────────────────────────── */
+
+.draw-steel-hideout .dshideout-source-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.draw-steel-hideout .dshideout-source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.draw-steel-hideout .dshideout-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px 2px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: inherit;
+  background: rgba(60, 120, 200, 0.15);
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  white-space: nowrap;
+}
+
+.draw-steel-hideout .dshideout-source-chip-x {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 0;
+  line-height: 1;
+  transition: opacity 0.1s;
+}
+
+.draw-steel-hideout .dshideout-source-chip-x:hover {
+  opacity: 1;
+  color: #ff6b6b;
+}
+
+.draw-steel-hideout .dshideout-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 30px;
+  opacity: 0.5;
+  flex: 1;
+}
+
+.draw-steel-hideout .dshideout-empty-icon {
+  font-size: 2.5rem;
+}
+
+/* ─── Browser popup ─────────────────────────────────────────── */
+
+.draw-steel-hideout.dshideout-browser .window-content {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.draw-steel-hideout .dshideout-browser-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.draw-steel-hideout .dshideout-browser-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-search-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 4px;
+  padding: 4px 8px;
+  background: rgba(128, 128, 128, 0.08);
+}
+
+.draw-steel-hideout .dshideout-search-icon {
+  opacity: 0.5;
+  font-size: 0.8rem;
+}
+
+.draw-steel-hideout .dshideout-browser-search {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  color: inherit;
+}
+
+.draw-steel-hideout .dshideout-clear-search {
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  color: inherit;
+  font-size: 0.75rem;
+}
+
+.draw-steel-hideout .dshideout-filter-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.draw-steel-hideout .dshideout-browser-count {
+  font-size: 0.72rem;
+  opacity: 0.55;
+  padding: 4px 12px;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-browser-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 8px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.draw-steel-hideout .dshideout-browser-row {
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-radius: 6px;
+  background: rgba(128, 128, 128, 0.04);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Browser row: top section is the fully-clickable header area */
+.draw-steel-hideout .dshideout-browser-row-top {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.draw-steel-hideout .dshideout-browser-row-top:hover {
+  background: rgba(128, 128, 128, 0.1);
+}
+
+.draw-steel-hideout .dshideout-browser-row-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 2px;
+}
+
+/* Meta rows: Type and Rolls rows below icon+name */
+.draw-steel-hideout .dshideout-browser-meta-rows {
+  padding: 4px 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Legacy icon col — kept for treasure browser compat */
+.draw-steel-hideout .dshideout-browser-icon-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  width: 54px;
+}
+
+.draw-steel-hideout .dshideout-browser-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Browser name column: name on top, meta row (type+char) below */
+.draw-steel-hideout .dshideout-browser-name-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.draw-steel-hideout .dshideout-browser-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.draw-steel-hideout .dshideout-browser-name {
+  font-size: 0.88rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draw-steel-hideout .dshideout-browser-goal {
+  font-size: 0.73rem;
+  opacity: 0.6;
+}
+
+.draw-steel-hideout .dshideout-browser-details {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  padding: 6px 12px;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.draw-steel-hideout .dshideout-browser-source {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  margin: 0 0 4px;
+}
+
+.draw-steel-hideout .dshideout-browser-row.is-selected {
+  border: 2px solid color-mix(in srgb, var(--color-warm-2, #c0843a) 70%, transparent);
+  background: rgba(var(--color-warm-2, 192 132 58), 0.07);
+}
+
+.draw-steel-hideout .dshideout-browser-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  background: rgba(128, 128, 128, 0.06);
+  min-height: 46px;
+}
+
+.draw-steel-hideout .dshideout-footer-item-name {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+}
+
+.draw-steel-hideout .dshideout-footer-hint {
+  flex: 1;
+  font-size: 0.78rem;
+  opacity: 0.45;
+  font-style: italic;
+}
+
+.draw-steel-hideout .dshideout-detail-input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(128, 128, 128, 0.1);
+  color: inherit;
+  font-size: 0.8rem;
+}
+
+.draw-steel-hideout .dshideout-browser-row-actions {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  justify-content: flex-end;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  background: rgba(128, 128, 128, 0.04);
+}
+
+.draw-steel-hideout .dshideout-browser-empty,
+.draw-steel-hideout .dshideout-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 30px;
+  opacity: 0.5;
+  font-size: 0.88rem;
+}
+
+.draw-steel-hideout .dshideout-craftable-badge {
+  color: var(--color-warm-2, #c0843a);
+  font-size: 0.8rem;
+}
+
+/* ─── Create Follower dialog ─────────────────────────────────── */
+
+.draw-steel-hideout.dshideout-dialog .window-content {
+  display: block;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.draw-steel-hideout .dshideout-create-follower {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.draw-steel-hideout .dshideout-step-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.draw-steel-hideout .dshideout-type-cards {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.draw-steel-hideout .dshideout-type-card-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draw-steel-hideout .dshideout-type-card {
+  padding: 16px;
+  border-radius: 8px;
+  border: 2px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(128, 128, 128, 0.06);
+  cursor: pointer;
+  color: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+  width: 100%;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.draw-steel-hideout .dshideout-type-card:hover {
+  border-color: color-mix(in srgb, var(--color-warm-2, #c0843a) 60%, transparent);
+  background: rgba(128, 128, 128, 0.12);
+}
+
+.draw-steel-hideout .dshideout-type-card-desc {
+  font-size: 0.83rem;
+  opacity: 0.7;
+  margin: 0;
+  padding: 0 4px;
+  line-height: 1.4;
+}
+
+.draw-steel-hideout .dshideout-back-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  font-size: 0.82rem;
+  padding: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.draw-steel-hideout .dshideout-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.draw-steel-hideout .dshideout-form-row:first-of-type {
+  margin-top: 0;
+}
+
+.draw-steel-hideout .dshideout-form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.draw-steel-hideout .dshideout-text-input {
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 0.88rem;
+  color: inherit;
+}
+
+.draw-steel-hideout .dshideout-char-choices {
+  display: flex;
+  gap: 12px;
+}
+
+.draw-steel-hideout .dshideout-radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.84rem;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.draw-steel-hideout .dshideout-skill-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.draw-steel-hideout .dshideout-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  transition: background 0.1s;
+}
+
+.draw-steel-hideout .dshideout-checkbox-label.is-selected {
+  background: rgba(var(--color-warm-2, 192 132 58), 0.15);
+  border-color: color-mix(in srgb, var(--color-warm-2, #c0843a) 50%, transparent);
+}
+
+.draw-steel-hideout .dshideout-auto-languages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.draw-steel-hideout .dshideout-extra-languages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.draw-steel-hideout .dshideout-language-pill {
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: rgba(128, 128, 128, 0.15);
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  font-size: 0.78rem;
+}
+
+.draw-steel-hideout .dshideout-label-muted {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.draw-steel-hideout .dshideout-hint {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  font-weight: normal;
+}
+
+.draw-steel-hideout .dshideout-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* ─── Progress Projects dialog ──────────────────────────────── */
+
+.draw-steel-hideout .dshideout-progress-projects {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.draw-steel-hideout .dshideout-dialog-hint {
+  font-size: 0.82rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.draw-steel-hideout .dshideout-progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  table-layout: fixed;
+  display: table !important;
+  margin: 0;
+}
+
+.draw-steel-hideout .dshideout-progress-table thead,
+.draw-steel-hideout .dshideout-progress-table tbody {
+  display: table-row-group !important;
+}
+
+.draw-steel-hideout .dshideout-progress-table tr {
+  display: table-row !important;
+}
+
+.draw-steel-hideout .dshideout-progress-table th:nth-child(1),
+.draw-steel-hideout .dshideout-progress-table td:nth-child(1) { width: 38%; }
+.draw-steel-hideout .dshideout-progress-table th:nth-child(2),
+.draw-steel-hideout .dshideout-progress-table td:nth-child(2) { width: 28%; }
+.draw-steel-hideout .dshideout-progress-table th:nth-child(3),
+.draw-steel-hideout .dshideout-progress-table td:nth-child(3) { width: 17%; }
+.draw-steel-hideout .dshideout-progress-table th:nth-child(4),
+.draw-steel-hideout .dshideout-progress-table td:nth-child(4) { width: 17%; }
+
+.draw-steel-hideout .dshideout-progress-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.65;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 6px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  display: table-cell !important;
+  overflow: hidden;
+}
+
+.draw-steel-hideout .dshideout-progress-table td {
+  padding: 6px;
+  vertical-align: middle;
+  border-bottom: none;
+  display: table-cell !important;
+  overflow: hidden;
+}
+
+.draw-steel-hideout .dshideout-progress-group-header td {
+  padding: 6px 6px 4px;
+  background: color-mix(in srgb, var(--color-warm-2, #c0843a) 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-warm-2, #c0843a) 20%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--color-warm-2, #c0843a) 20%, transparent);
+  display: table-cell !important;
+}
+
+.draw-steel-hideout .dshideout-progress-group-header:not(:first-child) td {
+  padding-top: 14px;
+}
+
+.draw-steel-hideout .dshideout-progress-group-header:first-child td {
+  border-top: none;
+}
+
+/* Per-group section layout */
+.draw-steel-hideout .dshideout-progress-group-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid color-mix(in srgb, var(--color-warm-2, #c0843a) 18%, transparent);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.draw-steel-hideout .dshideout-progress-group-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Group title bar (replaces the old group-header <tr>) */
+.draw-steel-hideout .dshideout-progress-group-section > .dshideout-progress-group-title {
+  padding: 5px 8px;
+  background: color-mix(in srgb, var(--color-warm-2, #c0843a) 12%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-warm-2, #c0843a) 18%, transparent);
+}
+
+/* Alternating data rows */
+.draw-steel-hideout .dshideout-progress-row.dshideout-row-even td {
+  background: rgba(128, 128, 128, 0.05);
+}
+
+.draw-steel-hideout .dshideout-progress-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.draw-steel-hideout .dshideout-progress-group-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.draw-steel-hideout .dshideout-progress-group-bar {
+  flex: 1;
+  margin-top: 0;
+  min-width: 60px;
+}
+
+.draw-steel-hideout .dshideout-progress-select-cell {
+  vertical-align: middle;
+  text-align: center;
+}
+
+.draw-steel-hideout .dshideout-progress-actor {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Ensure portrait img stays inline with the actor name text */
+.draw-steel-hideout .dshideout-progress-actor img {
+  display: inline-block !important;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+/* Keep td as table-cell so the column fills its full 38% width (fixes background cutoff) */
+.draw-steel-hideout .dshideout-progress-table td.dshideout-progress-actor {
+  display: table-cell !important;
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.draw-steel-hideout .dshideout-progress-chars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.draw-steel-hideout .dshideout-progress-text {
+  font-size: 0.72rem;
+  opacity: 0.6;
+}
+
+/* ─── Chat message ───────────────────────────────────────────── */
+
+.dshideout-progress-chat {
+  font-size: 0.85rem;
+}
+
+.dshideout-progress-chat h3 {
+  font-size: 0.9rem;
+  margin: 0 0 8px;
+}
+
+.dshideout-progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+
+.dshideout-progress-table th,
+.dshideout-progress-table td {
+  padding: 3px 5px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+  font-size: 0.8rem;
+}
+
+.dshideout-chat-portrait {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.dshideout-breakthrough {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  font-style: italic;
+}
+
+.dshideout-critical {
+  font-size: 0.72rem;
+  color: gold;
+  font-weight: 700;
+}
+
+.dshideout-project-summary {
+  border-top: 1px solid rgba(128, 128, 128, 0.2);
+  padding-top: 6px;
+}
+
+.dshideout-project-summary p {
+  margin: 2px 0;
+  font-size: 0.82rem;
+}

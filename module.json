@@ -1,0 +1,48 @@
+{
+  "id": "draw-steel-hideout",
+  "title": "Draw Steel - Hideout",
+  "description": "Stronghold management module for Draw Steel: tracks respite projects, manages followers (Artisan/Sage), assigns party members to projects, and maintains a party stash of items.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14.360"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "draw-steel",
+        "type": "system",
+        "compatibility": {
+          "minimum": "0.9.0",
+          "verified": "1.0.0"
+        }
+      }
+    ]
+  },
+  "url": "https://github.com/OmerCora/draw-steel-hideout",
+  "manifest": "https://github.com/OmerCora/draw-steel-hideout/releases/latest/download/module.json",
+  "authors": [
+    {
+      "name": "OmerCora",
+      "url": "https://www.coraomer.com"
+    }
+  ],
+  "esmodules": [
+    "scripts/module.mjs"
+  ],
+  "styles": [
+    "styles/hideout.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "follower": {}
+    }
+  }
+}

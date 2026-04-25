@@ -1,0 +1,33 @@
+{{!-- Hideout Action Bar --}}
+<div class="dshideout-action-bar">
+
+  {{#if isGM}}
+  <button type="button" class="dshideout-action-btn" data-action="createFollower">
+    <i class="fas fa-user-plus"></i>
+    <span>{{localize "DSHIDEOUT.Action.CreateFollower"}}</span>
+  </button>
+
+  <button type="button" class="dshideout-action-btn" data-action="openProjectBrowser">
+    <i class="fas fa-scroll"></i>
+    <span>{{localize "DSHIDEOUT.Action.AddProject"}}</span>
+  </button>
+
+  <button type="button" class="dshideout-action-btn" data-action="openTreasureBrowser">
+    <i class="fas fa-gem"></i>
+    <span>{{localize "DSHIDEOUT.Action.TreasureBrowser"}}</span>
+  </button>
+
+  {{#if hasActiveProjects}}
+    <button type="button" class="dshideout-action-btn dshideout-action-btn-primary" data-action="progressProjects">
+      <i class="fas fa-dice"></i>
+      <span>{{localize "DSHIDEOUT.Action.ProgressProjects"}}</span>
+    </button>
+  {{else}}
+    <button type="button" class="dshideout-action-btn" data-action="progressProjects" disabled>
+      <i class="fas fa-dice"></i>
+      <span>{{localize "DSHIDEOUT.Action.ProgressProjects"}}</span>
+    </button>
+  {{/if}}
+  {{/if}}
+
+</div>

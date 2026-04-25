@@ -1,0 +1,136 @@
+{{!-- Create Follower Dialog --}}
+<div class="dshideout-create-follower">
+
+  {{!-- STEP 1: Type selection --}}
+  {{#dshideout-eq step 1}}
+    <div class="dshideout-step dshideout-step-1">
+      <h2 class="dshideout-step-heading">{{localize "DSHIDEOUT.CreateFollower.ChooseType"}}</h2>
+      <div class="dshideout-type-cards">
+        {{#each presets}}
+          <div class="dshideout-type-card-wrapper">
+            <button type="button" class="dshideout-type-card" data-action="selectType" data-type="{{this.key}}">
+              {{this.label}}
+            </button>
+            <p class="dshideout-type-card-desc">{{this.description}}</p>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/dshideout-eq}}
+
+  {{!-- STEP 2: Configure follower --}}
+  {{#dshideout-eq step 2}}
+    <div class="dshideout-step dshideout-step-2">
+
+      <button type="button" class="dshideout-back-btn" data-action="backToStep1">
+        <i class="fas fa-arrow-left"></i> {{localize "DSHIDEOUT.CreateFollower.Back"}}
+      </button>
+
+      <h2 class="dshideout-step-heading">
+        {{localize "DSHIDEOUT.CreateFollower.Configure"}}:
+        {{#if preset}}{{localize preset.nameKey}}{{/if}}
+      </h2>
+
+      {{!-- Name --}}
+      <div class="dshideout-form-row">
+        <label class="dshideout-form-label">{{localize "DSHIDEOUT.CreateFollower.Name"}}</label>
+        <input type="text" name="followerName" class="dshideout-text-input"
+               placeholder="{{localize 'DSHIDEOUT.CreateFollower.NamePlaceholder'}}"
+               value="{{name}}" />
+      </div>
+
+      {{!-- Characteristics --}}
+      {{#if preset.charChoices}}
+        <div class="dshideout-form-row">
+          <label class="dshideout-form-label">{{localize "DSHIDEOUT.CreateFollower.CharBonus"}}</label>
+          <div class="dshideout-char-choices">
+            {{#each preset.charChoices}}
+              <label class="dshideout-radio-label">
+                <input type="radio" name="charChoice" data-char-choice="{{this}}"
+                       {{#dshideout-eq ../selectedChar this}}checked{{/dshideout-eq}} />
+                {{this}}
+              </label>
+            {{/each}}
+          </div>
+          <span class="dshideout-hint">{{localize "DSHIDEOUT.CreateFollower.ArtisanCharHint"}}</span>
+        </div>
+      {{else}}
+        <div class="dshideout-form-row dshideout-fixed-chars">
+          <label class="dshideout-form-label">{{localize "DSHIDEOUT.CreateFollower.Characteristics"}}</label>
+          <span class="dshideout-hint">{{localize "DSHIDEOUT.CreateFollower.SageCharHint"}}</span>
+        </div>
+      {{/if}}
+
+      {{!-- Skills --}}
+      <div class="dshideout-form-row dshideout-skill-row">
+        <label class="dshideout-form-label">
+          {{localize "DSHIDEOUT.CreateFollower.Skills"}}
+          <span class="dshideout-hint">({{localize "DSHIDEOUT.CreateFollower.ChooseN"}}: {{skillCount}})</span>
+        </label>
+        <div class="dshideout-skill-checkboxes">
+          {{#each skills}}
+            <label class="dshideout-checkbox-label {{#if this.selected}}is-selected{{/if}}">
+              <input type="checkbox"
+                     data-skill-toggle="{{this.key}}"
+                     {{#if this.selected}}checked{{/if}} />
+              {{this.label}}
+            </label>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- Languages --}}
+      <div class="dshideout-form-row">
+        <label class="dshideout-form-label">{{localize "DSHIDEOUT.CreateFollower.Languages"}}</label>
+        {{#if autoLanguages.length}}
+          <div class="dshideout-auto-languages">
+            <span class="dshideout-label-muted">{{localize "DSHIDEOUT.CreateFollower.AutoLanguages"}}:</span>
+            {{#each autoLanguages}}
+              <span class="dshideout-language-pill">{{this.label}}</span>
+            {{/each}}
+          </div>
+        {{/if}}
+        <div class="dshideout-extra-languages">
+          <span class="dshideout-label-muted">{{localize "DSHIDEOUT.CreateFollower.ChooseLanguages"}}: {{extraLanguageCount}}</span>
+          {{#each extraLanguageSlots}}
+            <select data-language-slot="{{this.slot}}" class="dshideout-select">
+              <option value="">— {{localize "DSHIDEOUT.CreateFollower.SelectLanguage"}} —</option>
+              {{#each this.options}}
+                <option value="{{this.value}}"
+                        {{#if this.isSelected}}selected{{/if}}>
+                  {{this.label}}
+                </option>
+              {{/each}}
+            </select>
+          {{/each}}
+        </div>
+      </div>
+
+      {{!-- Mentor --}}
+      <div class="dshideout-form-row">
+        <label class="dshideout-form-label">{{localize "DSHIDEOUT.CreateFollower.Mentor"}}
+          <span class="dshideout-hint">({{localize "DSHIDEOUT.CreateFollower.MentorOptional"}})</span>
+        </label>
+        <select name="mentorId" class="dshideout-select">
+          <option value="">— {{localize "DSHIDEOUT.CreateFollower.NoMentor"}} —</option>
+          {{#each mentorOptions}}
+            <option value="{{this.value}}" {{#dshideout-eq ../selectedMentorId this.value}}selected{{/dshideout-eq}}>
+              {{this.label}}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+
+      {{!-- Create button --}}
+      <div class="dshideout-dialog-footer">
+        <button type="button" class="dshideout-btn dshideout-btn-primary"
+                data-action="createFollower"
+                {{#unless canCreate}}disabled{{/unless}}>
+          <i class="fas fa-user-plus"></i> {{localize "DSHIDEOUT.CreateFollower.Create"}}
+        </button>
+      </div>
+
+    </div>
+  {{/dshideout-eq}}
+
+</div>

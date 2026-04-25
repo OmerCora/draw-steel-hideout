@@ -1,0 +1,139 @@
+{{!-- Treasure Browser --}}
+<div class="dshideout-browser-panel">
+
+  {{!-- Search + Filters --}}
+  <div class="dshideout-browser-controls">
+    <div class="dshideout-search-row">
+      <i class="fas fa-search dshideout-search-icon"></i>
+      <input type="text"
+             class="dshideout-browser-search"
+             placeholder="{{localize 'DSHIDEOUT.TreasureBrowser.SearchPlaceholder'}}"
+             value="{{searchText}}" />
+      {{#if searchText}}
+        <button type="button" class="dshideout-clear-search" data-action="clearSearch" title="{{localize 'DSHIDEOUT.Browser.ClearSearch'}}">
+          <i class="fas fa-times"></i>
+        </button>
+      {{/if}}
+    </div>
+
+    <div class="dshideout-filter-row">
+      <select name="categoryFilter" class="dshideout-select">
+        {{#each categoryOptions}}
+          <option value="{{this.value}}" {{#dshideout-eq ../categoryFilter this.value}}selected{{/dshideout-eq}}>{{this.label}}</option>
+        {{/each}}
+      </select>
+
+      <select name="echelonFilter" class="dshideout-select">
+        {{#each echelonOptions}}
+          <option value="{{this.value}}" {{#dshideout-eq ../echelonFilter this.value}}selected{{/dshideout-eq}}>{{this.label}}</option>
+        {{/each}}
+      </select>
+
+      <div class="dshideout-source-filter-row">
+        <div class="dshideout-source-chips">
+          {{#each sourceChips}}
+            <span class="dshideout-source-chip">
+              {{this.label}}
+              <button type="button" class="dshideout-source-chip-x" data-action="removeSource" data-source="{{this.value}}">×</button>
+            </span>
+          {{/each}}
+        </div>
+        {{#if availableSources.length}}
+          <select class="dshideout-select dshideout-small-select" name="addSource">
+            <option value="">+ {{localize "DSHIDEOUT.Browser.Sources"}}</option>
+            {{#each availableSources}}
+              <option value="{{this.value}}">{{this.label}}</option>
+            {{/each}}
+          </select>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  {{!-- Count --}}
+  <div class="dshideout-browser-count">
+    {{totalCount}} {{localize "DSHIDEOUT.Browser.Results"}}
+  </div>
+
+  {{!-- List --}}
+  <ul class="dshideout-browser-list">
+    {{#if isLoading}}
+      <li class="dshideout-loading">
+        <i class="fas fa-spinner fa-spin"></i> {{localize "DSHIDEOUT.Browser.Loading"}}
+      </li>
+    {{else if entries.length}}
+      {{#each entries}}
+        <li class="dshideout-browser-row {{#if this.isSelected}}is-selected{{/if}}"
+            data-uuid="{{this.uuid}}">
+          <div class="dshideout-browser-row-header" data-action="selectRow" data-uuid="{{this.uuid}}">
+            <img class="dshideout-browser-icon" src="{{this.img}}" alt="{{this.name}}" />
+            <div class="dshideout-browser-name-col">
+              <span class="dshideout-browser-name">{{this.name}}</span>
+              <div class="dshideout-browser-meta-row">
+                {{#if this.categoryLabel}}
+                  <span class="dshideout-type-pill">{{this.categoryLabel}}</span>
+                {{/if}}
+                {{#if this.echelonLabel}}
+                  <span class="dshideout-char-pill">{{this.echelonLabel}}</span>
+                {{/if}}
+                {{#if this.hasCraftingData}}
+                  <span class="dshideout-craftable-badge" title="{{localize 'DSHIDEOUT.TreasureBrowser.Craftable'}}">
+                    <i class="fas fa-hammer"></i>
+                  </span>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+
+          <div class="dshideout-collapsible {{#if this.isSelected}}is-expanded{{/if}}" data-collapsible-id="browser-{{this.uuid}}">
+            <div class="dshideout-collapsible-inner dshideout-browser-details">
+              {{#if this.projectSource}}
+                <p class="dshideout-browser-project-source"><strong>{{localize "DSHIDEOUT.Projects.ProjectSource"}}:</strong> {{this.projectSource}}</p>
+              {{else}}
+                <p class="dshideout-browser-source">{{localize "DSHIDEOUT.Browser.Source"}}: {{this.sourceLabel}}</p>
+              {{/if}}
+              {{#if this.projectGoal}}
+                <p><strong>{{localize "DSHIDEOUT.TreasureBrowser.Goal"}}:</strong> {{this.projectGoal}}</p>
+              {{/if}}
+              {{#if this.projectPrerequisites}}
+                <p><strong>{{localize "DSHIDEOUT.Projects.Prerequisites"}}:</strong> {{this.projectPrerequisites}}</p>
+              {{/if}}
+              {{{this.description}}}
+            </div>
+          </div>
+        </li>
+      {{/each}}
+    {{else}}
+      <li class="dshideout-browser-empty">
+        <i class="fas fa-search"></i>
+        <p>{{localize "DSHIDEOUT.Browser.NoResults"}}</p>
+      </li>
+    {{/if}}
+  </ul>
+
+  {{!-- Footer bar: static action buttons for the selected item --}}
+  <div class="dshideout-browser-footer">
+    {{#if selectedEntry}}
+      <span class="dshideout-footer-item-name">{{selectedEntry.name}}</span>
+      {{#if selectedEntry.hasCraftingData}}
+        <button type="button" class="dshideout-btn dshideout-btn-secondary"
+                data-action="addSelectedAsProject">
+          <i class="fas fa-hammer"></i> {{localize "DSHIDEOUT.TreasureBrowser.AddAsProject"}}
+        </button>
+      {{/if}}
+      {{#if isGM}}
+        <button type="button" class="dshideout-btn dshideout-btn-secondary"
+                data-action="addSelectedToArchives">
+          <i class="fas fa-book-open"></i> {{localize "DSHIDEOUT.TreasureBrowser.AddToArchives"}}
+        </button>
+        <button type="button" class="dshideout-btn dshideout-btn-primary"
+                data-action="addSelectedToStash">
+          <i class="fas fa-box"></i> {{localize "DSHIDEOUT.TreasureBrowser.AddToStash"}}
+        </button>
+      {{/if}}
+    {{else}}
+      <span class="dshideout-footer-hint">{{localize "DSHIDEOUT.TreasureBrowser.SelectHint"}}</span>
+    {{/if}}
+  </div>
+
+</div>

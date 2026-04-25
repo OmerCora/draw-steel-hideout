@@ -1,0 +1,374 @@
+{{!-- Hideout Main Panel: tab switcher + Projects/Stash content --}}
+<div class="dshideout-main">
+
+  {{!-- Tab buttons --}}
+  <nav class="dshideout-tabs">
+    <button class="dshideout-tab-btn {{#dshideout-eq activeTab 'projects'}}active{{/dshideout-eq}}"
+            data-action="switchTab" data-tab="projects">
+      <i class="fas fa-scroll"></i> {{localize "DSHIDEOUT.Tab.Projects"}}
+    </button>
+    <button class="dshideout-tab-btn {{#dshideout-eq activeTab 'archives'}}active{{/dshideout-eq}}"
+            data-action="switchTab" data-tab="archives">
+      <i class="fas fa-book-open"></i> {{localize "DSHIDEOUT.Tab.Archives"}}
+    </button>
+    <button class="dshideout-tab-btn {{#dshideout-eq activeTab 'stash'}}active{{/dshideout-eq}}"
+            data-action="switchTab" data-tab="stash">
+      <i class="fas fa-box-open"></i> {{localize "DSHIDEOUT.Tab.Stash"}}
+    </button>
+  </nav>
+
+  {{!-- ==================  PROJECTS TAB  ================== --}}
+  {{#dshideout-eq activeTab "projects"}}
+  <div class="dshideout-projects-panel" data-projects-drop-zone>
+
+    {{!-- Filter / Sort row --}}
+    <div class="dshideout-projects-controls">
+      <select name="projectFilter" class="dshideout-select">
+        <option value="all" {{#dshideout-eq projectFilter 'all'}}selected{{/dshideout-eq}}>{{localize "DSHIDEOUT.Projects.FilterAll"}}</option>
+        <option value="ongoing" {{#dshideout-eq projectFilter 'ongoing'}}selected{{/dshideout-eq}}>{{localize "DSHIDEOUT.Projects.FilterOngoing"}}</option>
+        <option value="completed" {{#dshideout-eq projectFilter 'completed'}}selected{{/dshideout-eq}}>{{localize "DSHIDEOUT.Projects.FilterCompleted"}}</option>
+      </select>
+      <select name="projectSort" class="dshideout-select">
+        <option value="progress" {{#dshideout-eq projectSort 'progress'}}selected{{/dshideout-eq}}>{{localize "DSHIDEOUT.Projects.SortProgress"}}</option>
+        <option value="name" {{#dshideout-eq projectSort 'name'}}selected{{/dshideout-eq}}>{{localize "DSHIDEOUT.Projects.SortName"}}</option>
+        <option value="contributors" {{#dshideout-eq projectSort 'contributors'}}selected{{/dshideout-eq}}>{{localize "DSHIDEOUT.Projects.SortContributors"}}</option>
+      </select>
+    </div>
+
+    <hr class="dshideout-divider" />
+    {{!-- Projects list --}}
+    <ul class="dshideout-projects-list">
+      {{#if projects.length}}
+        {{#each projects}}
+          <li class="dshideout-project-row {{#if this.completed}}is-completed{{/if}} {{#if this.hasEvent}}has-event{{/if}}"
+              data-project-id="{{this.id}}">
+
+            {{!-- ── Top bar: icon · name · actions · chevron ── --}}
+            <div class="dshideout-project-topbar"
+                 data-action="toggleDescription"
+                 data-description-id="{{this.id}}">
+              {{!-- Icon with overlaid book button --}}
+              <div class="dshideout-project-icon-wrap">
+                <img class="dshideout-project-icon" src="{{this.img}}" alt="{{this.name}}" />
+                <button type="button" class="dshideout-open-sheet-btn"
+                        data-action="openProjectSheet" data-uuid="{{this.uuid}}"
+                        title="{{localize 'DSHIDEOUT.Projects.OpenSheet'}}">
+                  <i class="fas fa-book"></i>
+                </button>
+              </div>
+              <span class="dshideout-project-name">
+                {{this.displayName}}
+                {{#if this.completed}}<span class="dshideout-completed-badge">({{localize "DSHIDEOUT.Projects.CompletedBadge"}})</span>{{/if}}
+              </span>
+              {{#if this.hasEvent}}
+                <i class="fas fa-exclamation-circle dshideout-event-icon" title="{{localize 'DSHIDEOUT.Projects.HasEvent'}}"></i>
+              {{/if}}
+              {{!-- Yield / Restart buttons inline in topbar --}}
+              {{#if this.canObtainYield}}
+                <button type="button" class="dshideout-btn dshideout-btn-primary dshideout-topbar-action"
+                        data-action="obtainYield" data-project-id="{{this.id}}">
+                  <i class="fas fa-gift"></i> {{localize "DSHIDEOUT.Projects.ObtainYield"}}
+                  {{#if this.yieldDisplay}} ({{this.yieldDisplay}}){{/if}}
+                </button>
+              {{/if}}
+              {{#if this.canRestart}}
+                <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-topbar-action"
+                        data-action="restartProject" data-project-id="{{this.id}}">
+                  <i class="fas fa-redo"></i> {{localize "DSHIDEOUT.Projects.RestartProject"}}
+                </button>
+              {{/if}}
+              {{!-- Trash + chevron always on far right --}}
+              <div class="dshideout-project-topbar-right">
+                {{#if @root.isGM}}
+                  <button type="button" class="dshideout-project-remove-btn"
+                          data-action="removeProject" data-project-id="{{this.id}}"
+                          title="{{localize 'DSHIDEOUT.Projects.Remove'}}">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                {{/if}}
+                <i class="fas fa-chevron-down dshideout-expand-icon"
+                   data-action="toggleDescription"
+                   data-description-id="{{this.id}}"
+                   data-chevron-id="{{this.id}}"></i>
+              </div>
+            </div>
+
+            {{!-- ── Body: left (meta + progress) | right (contributors) ── --}}
+            <div class="dshideout-project-body"
+                 data-action="toggleDescription"
+                 data-description-id="{{this.id}}">
+              {{!-- Left: type/chars meta + GM points editor + progress bar --}}
+              <div class="dshideout-project-left">
+                <div class="dshideout-project-meta">
+                  <div class="dshideout-project-meta-row">
+                    <span class="dshideout-meta-label">{{localize "DSHIDEOUT.Projects.TypeLabel"}}:</span>
+                    <span class="dshideout-type-label">{{this.projectTypeLabel}}</span>
+                    {{#if this.yieldDisplay}}
+                      <span class="dshideout-meta-label" style="margin-left:8px">{{localize "DSHIDEOUT.Projects.YieldAmountLabel"}}:</span>
+                      <span class="dshideout-type-label">{{this.yieldDisplay}}</span>
+                    {{/if}}
+                  </div>
+                  {{#if this.charLabels.length}}
+                    <div class="dshideout-project-meta-row" style="margin-top:4px; margin-bottom:4px">
+                      <span class="dshideout-meta-label">{{localize "DSHIDEOUT.Projects.CharsLabel"}}:</span>
+                      {{#each this.charLabels}}
+                        <span class="dshideout-char-pill">{{this}}</span>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </div>
+                {{#if @root.isGM}}
+                  <div class="dshideout-points-edit">
+                    <span class="dshideout-points-edit-label">Points:</span>
+                    <input type="number" class="dshideout-points-input"
+                           data-project-id="{{this.id}}"
+                           value="{{this.points}}"
+                           min="0"
+                           {{#if this.goal}}max="{{this.goal}}"{{/if}} />
+                    <span class="dshideout-points-of">/</span>
+                    <span class="dshideout-points-edit-label">Goal:</span>
+                    <input type="number" class="dshideout-goal-input"
+                           data-project-id="{{this.id}}"
+                           value="{{this.goal}}"
+                           min="0"
+                           placeholder="—" />
+                  </div>
+                {{/if}}
+                <div class="dshideout-progress-bar-container">
+                  <div class="dshideout-progress-bar{{#unless this.hasGoal}} dshideout-bar-no-goal{{/unless}}" style="width: {{this.startPct}}%"{{#if this.animateBar}} data-animate-to="{{this.progressPct}}"{{/if}}></div>
+                  <span class="dshideout-progress-label">{{this.progressLabel}}</span>
+                </div>
+              </div>
+
+              {{!-- Right: contributors (rectangular grid) --}}
+              <div class="dshideout-project-right">
+                <span class="dshideout-contributors-label">{{localize "DSHIDEOUT.Projects.ContributorsLabel"}}</span>
+                <div class="dshideout-contributors" data-project-drop-zone="{{this.id}}">
+                  {{#if this.contributors.length}}
+                    {{#each this.contributors}}
+                      <span class="dshideout-contributor-pill"
+                            data-actor-id="{{this.id}}"
+                            title="{{this.name}}"
+                            draggable="true"
+                            data-drag-contributor>
+                        <button type="button" class="dshideout-remove-contributor"
+                                data-action="removeContributor" data-actor-id="{{this.id}}"
+                                title="{{localize 'DSHIDEOUT.Projects.RemoveContributor'}}">
+                          <i class="fas fa-times"></i>
+                        </button>
+                        <img src="{{this.img}}" alt="{{this.name}}" class="dshideout-contributor-portrait" />
+                        <span class="dshideout-contributor-name">{{this.name}}</span>
+                      </span>
+                    {{/each}}
+                  {{else}}
+                    <span class="dshideout-contributors-hint">
+                      {{localize "DSHIDEOUT.Projects.DragContributor"}}
+                    </span>
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+
+            {{!-- ── Collapsible: description ── --}}
+            <div class="dshideout-collapsible {{#if this.isExpanded}}is-expanded{{/if}}"
+                 data-collapsible-id="{{this.id}}"
+                 data-action="toggleDescription"
+                 data-description-id="{{this.id}}">
+              <div class="dshideout-collapsible-inner dshideout-project-description">
+                {{#if this.projectSource}}
+                  <p class="dshideout-project-source-field">
+                    <strong>{{localize "DSHIDEOUT.Projects.ProjectSource"}}:</strong> {{this.projectSource}}
+                  </p>
+                {{/if}}
+                {{#if this.prerequisites}}
+                  <p class="dshideout-prerequisites">
+                    <strong>{{localize "DSHIDEOUT.Projects.Prerequisites"}}:</strong> {{this.prerequisites}}
+                  </p>
+                {{/if}}
+                {{{this.description}}}
+              </div>
+            </div>
+
+          </li>
+        {{/each}}
+      {{else}}
+        <li class="dshideout-empty-li">
+          <div class="dshideout-empty-state">
+            <i class="fas fa-scroll dshideout-empty-icon"></i>
+            <p>{{localize "DSHIDEOUT.Projects.None"}}</p>
+          </div>
+        </li>
+      {{/if}}
+
+      {{!-- Drop zone hint scrolls with list --}}
+      <li class="dshideout-drop-hint-li">
+        <div class="dshideout-drop-hint">
+          <i class="fas fa-plus-circle"></i> {{localize "DSHIDEOUT.Projects.DropHint"}}
+        </div>
+      </li>
+    </ul>
+
+  </div>
+  {{/dshideout-eq}}
+
+  {{!-- ==================  ARCHIVES TAB  ================== --}}
+  {{#dshideout-eq activeTab "archives"}}
+  <div class="dshideout-archives-panel">
+    <hr class="dshideout-divider" />
+    <div class="dshideout-archives-list">
+      {{#if archiveGroups.length}}
+        {{#each archiveGroups}}
+          <section class="dshideout-stash-group">
+            <h4 class="dshideout-stash-group-header">{{this.label}}</h4>
+            <ul class="dshideout-stash-items">
+              {{#each this.items}}
+                <li class="dshideout-stash-row {{#if this.isExpanded}}is-expanded{{/if}}"
+                    data-archive-item-id="{{this.id}}">
+                  <div class="dshideout-stash-row-header"
+                       data-action="toggleDescription"
+                       data-description-id="{{this.id}}">
+                    <img class="dshideout-stash-icon" src="{{this.img}}" alt="{{this.name}}" />
+                    <div class="dshideout-stash-info">
+                      <span class="dshideout-stash-name">{{this.name}}</span>
+                      {{#if this.echelonLabel}}
+                        <span class="dshideout-echelon-pill">{{this.echelonLabel}}</span>
+                      {{/if}}
+                    </div>
+                    <div class="dshideout-archive-controls">
+                      {{#if this.hasCraftingData}}
+                        <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-btn-icon dshideout-archive-craft-btn"
+                                data-action="beginCraftingFromArchive" data-archive-item-id="{{this.id}}"
+                                title="{{localize 'DSHIDEOUT.Archives.BeginCrafting'}}">
+                          <i class="fas fa-hammer"></i>
+                        </button>
+                      {{/if}}
+                      {{#if @root.isGM}}
+                        <button type="button" class="dshideout-btn dshideout-btn-danger dshideout-btn-icon"
+                                data-action="removeArchiveEntry" data-archive-item-id="{{this.id}}"
+                                title="{{localize 'DSHIDEOUT.Archives.Remove'}}">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      {{/if}}
+                      <i class="fas fa-chevron-down dshideout-stash-expand-icon"
+                         data-action="toggleDescription"
+                         data-description-id="{{this.id}}"
+                         data-chevron-id="{{this.id}}"></i>
+                    </div>
+                  </div>
+                  <div class="dshideout-collapsible {{#if this.isExpanded}}is-expanded{{/if}}"
+                       data-collapsible-id="{{this.id}}"
+                       data-action="toggleDescription"
+                       data-description-id="{{this.id}}">
+                    <div class="dshideout-collapsible-inner">
+                      <div class="dshideout-stash-expanded">
+                        {{#if this.description}}{{{this.description}}}{{/if}}
+                        {{#if this.projectData}}
+                          <div class="dshideout-stash-project-meta">
+                            {{#if this.projectData.goal}}<span><strong>Goal:</strong> {{this.projectData.goal}}</span>{{/if}}
+                            {{#if this.projectData.prerequisites}}<span><strong>Prerequisites:</strong> {{this.projectData.prerequisites}}</span>{{/if}}
+                            {{#if this.projectData.projectSource}}<span><strong>Source Material:</strong> {{this.projectData.projectSource}}</span>{{/if}}
+                          </div>
+                        {{/if}}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              {{/each}}
+            </ul>
+          </section>
+        {{/each}}
+      {{else}}
+        <div class="dshideout-empty-state">
+          <i class="fas fa-book-open dshideout-empty-icon"></i>
+          <p>{{localize "DSHIDEOUT.Archives.None"}}</p>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/dshideout-eq}}
+
+  {{!-- ==================  STASH TAB  ================== --}}
+  {{#dshideout-eq activeTab "stash"}}
+  <div class="dshideout-stash-panel" data-stash-drop-zone>
+    <hr class="dshideout-divider" />
+    <div class="dshideout-stash-list">
+      {{#if stashGroups.length}}
+        {{#each stashGroups}}
+          <section class="dshideout-stash-group">
+            <h4 class="dshideout-stash-group-header">{{this.label}}</h4>
+            <ul class="dshideout-stash-items">
+              {{#each this.items}}
+                <li class="dshideout-stash-row {{#if this.isExpanded}}is-expanded{{/if}}"
+                    data-stash-item-id="{{this.id}}"
+                    draggable="true"
+                    data-drag-stash-item>
+                  <div class="dshideout-stash-row-header"
+                       data-action="toggleDescription"
+                       data-description-id="{{this.id}}">
+                    <img class="dshideout-stash-icon" src="{{this.img}}" alt="{{this.name}}" />
+                    <div class="dshideout-stash-info">
+                      <span class="dshideout-stash-name">{{this.name}}</span>
+                      {{#if this.echelonLabel}}
+                        <span class="dshideout-echelon-pill">{{this.echelonLabel}}</span>
+                      {{/if}}
+                    </div>
+                    <div class="dshideout-qty-controls">
+                      {{#if @root.isGM}}
+                        <button type="button" class="dshideout-qty-btn" data-action="decreaseQty" data-stash-item-id="{{this.id}}">−</button>
+                      {{/if}}
+                      <span class="dshideout-qty-value">{{this.quantity}}</span>
+                      {{#if @root.isGM}}
+                        <button type="button" class="dshideout-qty-btn" data-action="increaseQty" data-stash-item-id="{{this.id}}">+</button>
+                        <button type="button" class="dshideout-btn dshideout-btn-danger dshideout-btn-icon"
+                                data-action="removeStashItem" data-stash-item-id="{{this.id}}"
+                                title="{{localize 'DSHIDEOUT.Stash.Remove'}}">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      {{/if}}
+                      <i class="fas fa-chevron-down dshideout-stash-expand-icon"
+                         data-action="toggleDescription"
+                         data-description-id="{{this.id}}"
+                         data-chevron-id="{{this.id}}"></i>
+                    </div>
+                  </div>
+                  <div class="dshideout-collapsible {{#if this.isExpanded}}is-expanded{{/if}}"
+                       data-collapsible-id="{{this.id}}"
+                       data-action="toggleDescription"
+                       data-description-id="{{this.id}}">
+                    <div class="dshideout-collapsible-inner">
+                      <div class="dshideout-stash-expanded">
+                        {{#if this.description}}{{{this.description}}}{{/if}}
+                        {{#if this.projectData}}
+                          <div class="dshideout-stash-project-meta">
+                            {{#if this.projectData.goal}}<span><strong>Goal:</strong> {{this.projectData.goal}}</span>{{/if}}
+                            {{#if this.projectData.prerequisites}}<span><strong>Prerequisites:</strong> {{this.projectData.prerequisites}}</span>{{/if}}
+                            {{#if this.projectData.projectSource}}<span><strong>Source Material:</strong> {{this.projectData.projectSource}}</span>{{/if}}
+                          </div>
+                        {{/if}}
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              {{/each}}
+            </ul>
+          </section>
+        {{/each}}
+      {{else}}
+        <div class="dshideout-empty-state">
+          <i class="fas fa-box-open dshideout-empty-icon"></i>
+          <p>{{localize "DSHIDEOUT.Stash.None"}}</p>
+        </div>
+      {{/if}}
+
+      {{!-- Drop zone hint scrolls with list --}}
+      {{#if isGM}}
+        <div class="dshideout-drop-hint">
+          <i class="fas fa-plus-circle"></i> {{localize "DSHIDEOUT.Stash.DropHint"}}
+        </div>
+      {{/if}}
+    </div>
+
+  </div>
+  {{/dshideout-eq}}
+
+</div>

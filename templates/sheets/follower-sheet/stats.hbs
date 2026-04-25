@@ -1,0 +1,37 @@
+{{! Follower Sheet – Stats Tab }}
+{{! Sections: Characteristics → Skills → Languages                       }}
+{{! Resources, Free Strike, Combat, Movement, Immunities all removed.    }}
+<section class="tab stats standard-form {{tab.cssClass}}" data-group="primary" data-tab="stats">
+
+  {{!-- ── Characteristics ──────────────────────────────────────────── --}}
+  {{> "systems/draw-steel/templates/sheets/actor/shared/partials/stats/characteristics.hbs"
+      editCharacteristics=(not isPlay)}}
+
+  {{!-- ── Skills ───────────────────────────────────────────────────── --}}
+  <fieldset class="skills">
+    <legend>{{localize "DSHIDEOUT.FollowerSheet.Skills"}}</legend>
+    {{#if isPlay}}
+    <p class="draw-steel-hideout-trait-list">{{skills.list}}</p>
+    {{else}}
+    {{formInput systemFields.skills.fields.value
+      value=systemSource.skills.value
+      options=skills.options
+      dataset=datasets.isSource}}
+    {{/if}}
+  </fieldset>
+
+  {{!-- ── Languages ──────────────────────────────────────────────────--}}
+  <fieldset class="languages">
+    <legend>{{localize "DSHIDEOUT.FollowerSheet.Languages"}}</legend>
+    {{#if isPlay}}
+    <p class="draw-steel-hideout-trait-list">{{languages.list}}</p>
+    {{else}}
+    {{formInput systemFields.biography.fields.languages
+      value=systemSource.biography.languages
+      dataset=datasets.isSource
+      options=languages.options
+      sort=true}}
+    {{/if}}
+  </fieldset>
+
+</section>

@@ -1,0 +1,87 @@
+{{!-- Hideout Roster Panel (left column) --}}
+<div class="dshideout-roster">
+
+  {{!-- Heroes section --}}
+  <section class="dshideout-roster-section">
+    <h3 class="dshideout-roster-heading">{{localize "DSHIDEOUT.Roster.Heroes"}}</h3>
+    {{#if heroes.length}}
+      <ul class="dshideout-roster-list dshideout-roster-heroes">
+        {{#each heroes}}
+          <li class="dshideout-roster-row {{#if this.contributingProjectId}}is-contributing{{/if}}"
+              draggable="true"
+              data-drag-actor
+              data-actor-id="{{this.id}}"
+              data-hero-drop-zone
+              data-tooltip="{{#if this.contributingProjectName}}{{localize 'DSHIDEOUT.Roster.Contributing'}}: {{this.contributingProjectName}}{{else}}{{localize 'DSHIDEOUT.Roster.NotAssigned'}}{{/if}}">
+            <img class="dshideout-portrait" src="{{this.img}}" alt="{{this.name}}" />
+            <span class="dshideout-roster-name">{{this.name}}</span>
+            {{#if this.contributingProjectId}}
+              <span class="dshideout-contributing-badge" title="{{this.contributingProjectName}}">
+                <i class="fas fa-hammer"></i>
+              </span>
+            {{/if}}
+          </li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p class="dshideout-roster-empty">{{localize "DSHIDEOUT.Roster.NoHeroes"}}</p>
+    {{/if}}
+  </section>
+
+  {{!-- Followers section --}}
+  <section class="dshideout-roster-section" data-follower-roster-drop>
+    <h3 class="dshideout-roster-heading">{{localize "DSHIDEOUT.Roster.Followers"}}</h3>
+    {{#if followers.length}}
+      <ul class="dshideout-roster-list dshideout-roster-followers">
+        {{#each followers}}
+          <li class="dshideout-roster-row {{#if this.contributingProjectId}}is-contributing{{/if}}"
+              draggable="{{this.isDraggable}}"
+              data-drag-actor
+              data-actor-id="{{this.id}}"
+              data-tooltip="{{this.followerTooltip}}"
+              data-tooltip-class="draw-steel-hideout-tooltip">
+            <img class="dshideout-portrait" src="{{this.img}}" alt="{{this.name}}" />
+            <span class="dshideout-roster-name">{{this.name}}</span>
+            {{#if ../isGM}}
+              <button type="button"
+                      class="dshideout-roster-remove-btn"
+                      data-action="removeFromRoster"
+                      data-actor-id="{{this.id}}"
+                      title="{{localize 'DSHIDEOUT.Roster.RemoveFollower'}}">
+                <i class="fas fa-times"></i>
+              </button>
+            {{/if}}
+            {{#if this.contributingProjectId}}
+              <span class="dshideout-contributing-badge" title="{{this.contributingProjectName}}">
+                <i class="fas fa-hammer"></i>
+              </span>
+            {{/if}}
+            {{#if this.mentorName}}
+              <span class="dshideout-mentor-badge" title="{{localize 'DSHIDEOUT.Roster.Mentor'}}: {{this.mentorName}}">
+                <i class="fas fa-user-shield"></i>
+              </span>
+            {{/if}}
+          </li>
+        {{/each}}
+      </ul>
+    {{else}}
+      <p class="dshideout-roster-empty">{{localize "DSHIDEOUT.Roster.NoFollowers"}}</p>
+    {{/if}}
+
+    {{!-- Add follower section (GM only, shows world followers not in roster) --}}
+    {{#if isGM}}
+      {{#if availableFollowers.length}}
+        <div class="dshideout-add-follower-row">
+          <label class="dshideout-add-follower-label">{{localize "DSHIDEOUT.Roster.AddFollowerLabel"}}</label>
+          <select class="dshideout-select dshideout-add-follower-select" data-add-follower-select>
+            <option value="">{{localize "DSHIDEOUT.Roster.AddFollowerSelect"}}</option>
+            {{#each availableFollowers}}
+              <option value="{{this.id}}">{{this.name}}</option>
+            {{/each}}
+          </select>
+        </div>
+      {{/if}}
+    {{/if}}
+  </section>
+
+</div>

@@ -1,0 +1,90 @@
+{{!-- Progress Projects Dialog --}}
+<div class="dshideout-progress-projects">
+
+  {{#if hasRows}}
+    <p class="dshideout-dialog-hint">{{localize "DSHIDEOUT.ProgressProjects.Hint"}}</p>
+
+    {{#each groups}}
+      <div class="dshideout-progress-group-section">
+        {{!-- Project group title bar --}}
+        <div class="dshideout-progress-group-title">
+          <span class="dshideout-progress-group-name">{{this.projectName}}</span>
+          <div class="dshideout-mini-progress-bar dshideout-progress-group-bar">
+            <div class="dshideout-mini-bar-fill" style="width:{{this.progressPct}}%"></div>
+          </div>
+          <span class="dshideout-progress-text">{{this.progress}}</span>
+        </div>
+
+        {{!-- Contributor table — every group gets the column header row --}}
+        <table class="dshideout-progress-table">
+          <thead>
+            <tr>
+              <th>{{localize "DSHIDEOUT.ProgressProjects.Actor"}}</th>
+              <th>{{localize "DSHIDEOUT.ProgressProjects.Characteristic"}}</th>
+              <th>{{localize "DSHIDEOUT.ProgressProjects.Edges"}}</th>
+              <th>{{localize "DSHIDEOUT.ProgressProjects.Banes"}}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.rows}}
+              <tr class="dshideout-progress-row {{#if this.isEvenRow}}dshideout-row-even{{/if}}"
+                  data-contributor-row
+                  data-actor-id="{{this.actorId}}"
+                  data-project-id="{{this.projectId}}">
+
+                {{!-- Actor --}}
+                <td class="dshideout-progress-actor">
+                  <img class="dshideout-contributor-portrait dshideout-progress-portrait" src="{{this.actorImg}}" alt="{{this.actorName}}" />
+                  <span>{{this.actorName}}</span>
+                </td>
+
+                {{!-- Characteristics --}}
+                <td class="dshideout-progress-chars">
+                  {{#each this.charList}}
+                    <span class="dshideout-char-pill" title="{{this.label}}">
+                      {{this.label}}: {{this.value}}
+                    </span>
+                  {{/each}}
+                </td>
+
+                {{!-- Edges --}}
+                <td class="dshideout-progress-select-cell">
+                  <select data-roll-option="edges" data-actor-id="{{this.actorId}}" class="dshideout-select dshideout-small-select">
+                    <option value="0" {{#dshideout-eq this.edges 0}}selected{{/dshideout-eq}}>0</option>
+                    <option value="1" {{#dshideout-eq this.edges 1}}selected{{/dshideout-eq}}>1</option>
+                    <option value="2" {{#dshideout-eq this.edges 2}}selected{{/dshideout-eq}}>2</option>
+                  </select>
+                </td>
+
+                {{!-- Banes --}}
+                <td class="dshideout-progress-select-cell">
+                  <select data-roll-option="banes" data-actor-id="{{this.actorId}}" class="dshideout-select dshideout-small-select">
+                    <option value="0" {{#dshideout-eq this.banes 0}}selected{{/dshideout-eq}}>0</option>
+                    <option value="1" {{#dshideout-eq this.banes 1}}selected{{/dshideout-eq}}>1</option>
+                    <option value="2" {{#dshideout-eq this.banes 2}}selected{{/dshideout-eq}}>2</option>
+                  </select>
+                </td>
+
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    {{/each}}
+
+    <div class="dshideout-dialog-footer">
+      <button type="button" class="dshideout-btn dshideout-btn-primary dshideout-btn-large"
+              data-action="rollAll">
+        <i class="fas fa-dice-d20"></i> {{localize "DSHIDEOUT.ProgressProjects.RollAll"}}
+      </button>
+    </div>
+
+  {{else}}
+    <div class="dshideout-empty-state">
+      <i class="fas fa-dice dshideout-empty-icon"></i>
+      <p>{{localize "DSHIDEOUT.ProgressProjects.NoContributors"}}</p>
+    </div>
+  {{/if}}
+
+</div>
+
