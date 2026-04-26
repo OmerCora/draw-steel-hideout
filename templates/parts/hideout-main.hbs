@@ -47,14 +47,16 @@
             <div class="dshideout-project-topbar"
                  data-action="toggleDescription"
                  data-description-id="{{this.id}}">
-              {{!-- Icon with overlaid book button --}}
+              {{!-- Icon with overlaid book button (GM only) --}}
               <div class="dshideout-project-icon-wrap">
                 <img class="dshideout-project-icon" src="{{this.img}}" alt="{{this.name}}" />
+                {{#if @root.isGM}}
                 <button type="button" class="dshideout-open-sheet-btn"
                         data-action="openProjectSheet" data-uuid="{{this.uuid}}"
                         title="{{localize 'DSHIDEOUT.Projects.OpenSheet'}}">
                   <i class="fas fa-book"></i>
                 </button>
+                {{/if}}
               </div>
               <span class="dshideout-project-name">
                 {{this.displayName}}
@@ -279,6 +281,11 @@
                         </button>
                       {{/if}}
                       {{#if @root.isGM}}
+                        <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-btn-icon"
+                                data-action="openProjectSheet" data-uuid="{{this.uuid}}"
+                                title="{{localize 'DSHIDEOUT.Projects.OpenSheet'}}">
+                          <i class="fas fa-book"></i>
+                        </button>
                         <button type="button" class="dshideout-btn dshideout-btn-danger dshideout-btn-icon"
                                 data-action="removeArchiveEntry" data-archive-item-id="{{this.id}}"
                                 title="{{localize 'DSHIDEOUT.Archives.Remove'}}">
@@ -356,6 +363,11 @@
                       {{#if @root.isGM}}
                         <button type="button" class="dshideout-qty-btn" data-action="decreaseQty" data-stash-item-id="{{this.id}}">−</button>
                         <button type="button" class="dshideout-qty-btn" data-action="increaseQty" data-stash-item-id="{{this.id}}">+</button>
+                        <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-btn-icon"
+                                data-action="openProjectSheet" data-uuid="{{this.uuid}}"
+                                title="{{localize 'DSHIDEOUT.Projects.OpenSheet'}}">
+                          <i class="fas fa-book"></i>
+                        </button>
                         <button type="button" class="dshideout-btn dshideout-btn-danger dshideout-btn-icon"
                                 data-action="removeStashItem" data-stash-item-id="{{this.id}}"
                                 title="{{localize 'DSHIDEOUT.Stash.Remove'}}">

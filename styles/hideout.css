@@ -1041,7 +1041,7 @@
    players (who don't see qty +/- and trash buttons) so the chevron
    stays close to the quantity instead of leaving a wide empty gap. */
 .draw-steel-hideout .dshideout-stash-panel {
-  --dshideout-stash-btns-w: 86px;
+  --dshideout-stash-btns-w: 116px;
 }
 .draw-steel-hideout .dshideout-stash-panel.is-player {
   --dshideout-stash-btns-w: 0px;
@@ -1329,10 +1329,18 @@
   width: 26px;
   height: 26px;
   box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   line-height: 1;
+}
+
+.draw-steel-hideout .dshideout-btn-icon > i {
+  display: block;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+  /* FA glyphs sit slightly above the geometric box center due to font metrics. */
+  transform: translateY(1px);
 }
 
 /* Orange hammer indicator for stash items with crafting project data */
@@ -2070,11 +2078,13 @@
 
 .dshideout-progress-chat {
   font-size: 0.85rem;
+  color: inherit;
 }
 
 .dshideout-progress-chat h3 {
   font-size: 0.9rem;
   margin: 0 0 8px;
+  color: inherit;
 }
 
 .dshideout-progress-table {
@@ -2082,6 +2092,7 @@
   border-collapse: collapse;
   margin-bottom: 8px;
   table-layout: fixed;
+  color: inherit;
 }
 
 .dshideout-progress-table th:nth-child(1),
@@ -2099,8 +2110,9 @@
 .dshideout-progress-table th,
 .dshideout-progress-table td {
   padding: 3px 5px;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   font-size: 0.8rem;
+  color: inherit;
 }
 
 .dshideout-chat-portrait {
@@ -2124,13 +2136,15 @@
 }
 
 .dshideout-project-summary {
-  border-top: 1px solid rgba(128, 128, 128, 0.2);
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   padding-top: 6px;
+  color: inherit;
 }
 
 .dshideout-project-summary p {
   margin: 2px 0;
   font-size: 0.82rem;
+  color: inherit;
 }
 
 /* --- Project Settings dialog --------------------------------- */
