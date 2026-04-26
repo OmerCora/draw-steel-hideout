@@ -315,10 +315,26 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
       if (coll) coll.classList.toggle("is-expanded", isNow);
     }
 
-    // Defer scroll so the DOM has reflowed after the previous row collapses
+    // Scroll the newly-selected row into view only after any collapsing row
+    // finishes its CSS transition (0.25s). A single rAF fires too early while
+    // the previously-expanded row is still mid-animation, causing the target
+    // position to be calculated incorrectly.
     if (this.#selectedUuid) {
       const selectedRow = this.element.querySelector(`.dshideout-browser-row[data-uuid="${this.#selectedUuid}"]`);
-      if (selectedRow) requestAnimationFrame(() => selectedRow.scrollIntoView({ block: "start", behavior: "smooth" }));
+      if (selectedRow) {
+        const doScroll = () => selectedRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        // Find a collapsible that is NOT expanded but still has visible height
+        // (i.e. currently mid-collapse transition).
+        const collapsing = [...this.element.querySelectorAll(".dshideout-collapsible:not(.is-expanded)")]
+          .find(el => el.getBoundingClientRect().height > 0);
+        if (collapsing) {
+          collapsing.addEventListener("transitionend", doScroll, { once: true });
+          // Safety fallback in case transitionend never fires (reduced-motion, etc.)
+          setTimeout(doScroll, 300);
+        } else {
+          requestAnimationFrame(doScroll);
+        }
+      }
     }
 
     // Update footer via direct DOM â€” avoids re-render flash

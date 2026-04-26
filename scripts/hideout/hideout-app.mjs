@@ -230,11 +230,19 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const isMentor = mentorActor && game.user.character === mentorActor;
         const isUnassigned = !mentorActor;
 
-        const reason = a.system.characteristics?.reason?.value ?? 0;
-        const reasonStr = reason >= 0 ? `+${reason}` : `${reason}`;
+        const chars = a.system.characteristics ?? {};
+        const charOrder = ["might", "agility", "reason", "intuition", "presence"];
+        const charLabels = { might: "Might", agility: "Agility", reason: "Reason", intuition: "Intuition", presence: "Presence" };
+        const charParts = charOrder
+          .filter(k => (chars[k]?.value ?? 0) !== 0)
+          .map(k => {
+            const v = chars[k].value;
+            return `${charLabels[k]}: ${v >= 0 ? "+" : ""}${v}`;
+          });
         const skillsList = a.system.skills?.list ?? "";
 
-        const tooltipParts = [`Reason: ${reasonStr}`];
+        const tooltipParts = [];
+        if (charParts.length) tooltipParts.push(charParts.join(" | "));
         if (skillsList) tooltipParts.push(`Skills: ${skillsList}`);
         if (contributingProject) tooltipParts.push(`Contributing to: ${contributingProject.name}`);
         tooltipParts.push(`Mentor: ${mentorName ?? "none"}`);

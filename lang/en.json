@@ -161,6 +161,7 @@
   "DSHIDEOUT.Roster.DropFollowerHint": "Drop a follower actor here to add to roster",
   "DSHIDEOUT.Projects.ProjectSource": "Project Source",
   "DSHIDEOUT.Projects.OpenSheet": "Open project sheet",
+  "DSHIDEOUT.Common.OpenItemSheet": "Open item sheet",
   "DSHIDEOUT.Projects.YieldAmountLabel": "Yield Amount",
 
   "DSHIDEOUT.Projects.SettingsTitle": "Project Settings",
