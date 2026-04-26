@@ -2159,21 +2159,23 @@
 /* --- Project Event chat messages ----------------------------- */
 
 .dshideout-event-chat {
-  border: 1px solid rgba(192, 132, 58, 0.5);
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
   border-radius: 6px;
   padding: 8px 10px;
-  background: rgba(192, 132, 58, 0.06);
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  color: inherit;
 }
 
 .dshideout-event-chat-header {
   margin: 0 0 4px;
   font-size: 0.95rem;
   font-weight: 700;
+  color: inherit;
 }
 
 .dshideout-event-chat-header i {
   margin-right: 4px;
-  color: rgba(192, 132, 58, 0.9);
+  opacity: 0.75;
 }
 
 .dshideout-event-chat-table {

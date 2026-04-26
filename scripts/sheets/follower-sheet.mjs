@@ -29,18 +29,30 @@ let _FollowerSheet = null;
 export function getFollowerSheetClass() {
   if (_FollowerSheet) return _FollowerSheet;
 
-  // Grab DrawSteelRetainerSheet from the live registry
-  const retainerEntries = Object.values(CONFIG.Actor.sheetClasses?.retainer ?? {});
-  const retainerEntry = retainerEntries.find(e => e.default) ?? retainerEntries[0];
+  // Prefer the original system class from the ds namespace. When Draw Steel Plus
+  // is enabled it replaces CONFIG.Actor.sheetClasses.retainer with its own subclass
+  // that breaks our trimmed Stats tab (characteristics/skills/languages don't render).
+  // Extending the unmodified system class avoids inheriting those overrides.
+  const dsPlusActive = game.modules.get("draw-steel-plus")?.active;
+  let DrawSteelRetainerSheet = ds?.applications?.sheets?.DrawSteelRetainerSheet ?? null;
 
-  if (!retainerEntry?.cls) {
+  if (!DrawSteelRetainerSheet) {
+    // Fallback: pull from the live registry (may be DS Plus's override).
+    const retainerEntries = Object.values(CONFIG.Actor.sheetClasses?.retainer ?? {});
+    const retainerEntry = retainerEntries.find(e => e.default) ?? retainerEntries[0];
+    DrawSteelRetainerSheet = retainerEntry?.cls ?? null;
+  }
+
+  if (!DrawSteelRetainerSheet) {
     throw new Error(
       "draw-steel-hideout | Cannot build FollowerSheet – DrawSteelRetainerSheet not found. " +
       `Available actor sheet types: ${Object.keys(CONFIG.Actor.sheetClasses ?? {}).join(", ")}`
     );
   }
 
-  const DrawSteelRetainerSheet = retainerEntry.cls;
+  if (dsPlusActive) {
+    console.log("draw-steel-hideout | Draw Steel Plus detected – extending the unmodified system DrawSteelRetainerSheet for FollowerSheet.");
+  }
 
   /* ------------------------------------------------------------------ */
 
