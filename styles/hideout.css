@@ -1384,6 +1384,11 @@
   color-scheme: inherit;
 }
 
+.draw-steel-hideout .dshideout-select:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .draw-steel-hideout .dshideout-small-select {
   font-size: 0.75rem;
   padding: 2px 24px 2px 6px;
@@ -1881,35 +1886,35 @@
   border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
 }
 
-/* ─── Create Follower dialog – sticky footer part ───────────── */
-/* Make window-content a flex column so the footer PART stays pinned at bottom */
+/* ─── Create Follower dialog – scrollable body + sticky footer ─ */
+/* Make window-content the scroll container. Foundry already constrains its height
+   (flex: 1 in the app's column layout), so overflow-y: auto triggers on shrink. */
 #dshideout-create-follower .window-content {
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   padding: 0 !important;
-  height: 100%;
 }
 
-/* The dialog PART scrolls */
-#dshideout-create-follower-dialog {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  min-height: 0;
-  padding: 0; /* template handles its own padding */
-}
-
-/* The footer PART stays pinned */
+/* Footer sticks to the bottom of the scrollable window-content */
 #dshideout-create-follower-footer {
-  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   background: color-mix(in srgb, currentColor 4%, transparent);
 }
 
 .draw-steel-hideout .dshideout-dialog-footer-bar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   padding: 8px 12px;
+}
+
+.draw-steel-hideout .dshideout-create-as-item-label {
+  align-self: stretch;
+  align-items: center;
+  margin: 0;
 }
 
 /* ─── Progress Projects dialog ──────────────────────────────── */

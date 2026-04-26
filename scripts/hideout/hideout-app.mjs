@@ -218,7 +218,11 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   #buildRosterFollowers() {
     const rosterIds = new Set(HideoutApp.#getRosterFollowerIds());
-    return game.actors
+    const isGM = game.user.isGM;
+    const charOrder = ["might", "agility", "reason", "intuition", "presence"];
+    const charLabels = { might: "Might", agility: "Agility", reason: "Reason", intuition: "Intuition", presence: "Presence" };
+
+    const actorFollowers = game.actors
       .filter(a => a.type === FOLLOWER_TYPE && rosterIds.has(a.id))
       .map(a => {
         // mentor is a ForeignDocumentField — resolves to the Actor document, not an ID string
@@ -226,13 +230,10 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
         const mentorName = mentorActor?.name ?? null;
         const contributingProject = getContributingProject(a.id);
 
-        const isGM = game.user.isGM;
         const isMentor = mentorActor && game.user.character === mentorActor;
         const isUnassigned = !mentorActor;
 
         const chars = a.system.characteristics ?? {};
-        const charOrder = ["might", "agility", "reason", "intuition", "presence"];
-        const charLabels = { might: "Might", agility: "Agility", reason: "Reason", intuition: "Intuition", presence: "Presence" };
         const charParts = charOrder
           .filter(k => (chars[k]?.value ?? 0) !== 0)
           .map(k => {
@@ -249,6 +250,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
         return {
           id: a.id,
+          isItemFollower: false,
           name: a.name,
           img: a.img,
           uuid: a.uuid,
@@ -269,15 +271,71 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
           followerTooltip: tooltipParts.join("<br>"),
         };
       });
+
+    // Item followers (system follower item type)
+    const rosterItemIds = new Set(HideoutApp.#getRosterItemFollowerIds());
+    const itemFollowers = game.items
+      .filter(i => i.type === "follower" && rosterItemIds.has(i.id))
+      .map(i => {
+        const chars = i.system.characteristics ?? {};
+        const charParts = charOrder
+          .filter(k => (chars[k]?.value ?? 0) !== 0)
+          .map(k => {
+            const v = chars[k].value;
+            return `${charLabels[k]}: ${v >= 0 ? "+" : ""}${v}`;
+          });
+        const skills = i.system.skills?.value ?? [];
+        const skillsList = Array.from(skills).join(", ");
+
+        const contributingProject = getContributingProject(i.id);
+        const tooltipParts = [];
+        if (charParts.length) tooltipParts.push(charParts.join(" | "));
+        if (skillsList) tooltipParts.push(`Skills: ${skillsList}`);
+        if (contributingProject) tooltipParts.push(`Contributing to: ${contributingProject.name}`);
+
+        return {
+          id: i.id,
+          isItemFollower: true,
+          name: i.name,
+          img: i.img,
+          uuid: i.uuid,
+          mentorId: null,
+          mentorName: null,
+          isDraggable: true,
+          isGMOrOwner: isGM || i.isOwner,
+          contributingProjectId: contributingProject?.id ?? null,
+          contributingProjectName: contributingProject?.name ?? null,
+          characteristics: {
+            might: chars.might?.value ?? 0,
+            agility: chars.agility?.value ?? 0,
+            reason: chars.reason?.value ?? 0,
+            intuition: chars.intuition?.value ?? 0,
+            presence: chars.presence?.value ?? 0,
+          },
+          skillsList,
+          followerTooltip: tooltipParts.join("<br>"),
+        };
+      });
+
+    return [...actorFollowers, ...itemFollowers];
   }
 
   /** World followers not yet in the roster (for the "add" dropdown). */
   #buildAvailableFollowers() {
     const rosterIds = new Set(HideoutApp.#getRosterFollowerIds());
-    return game.actors
+    const rosterItemIds = new Set(HideoutApp.#getRosterItemFollowerIds());
+
+    const actorFollowers = game.actors
       .filter(a => a.type === FOLLOWER_TYPE && !rosterIds.has(a.id))
-      .map(a => ({ id: a.id, name: a.name }))
+      .map(a => ({ id: a.id, name: a.name, selectValue: a.id, isItem: false }))
       .sort((a, b) => a.name.localeCompare(b.name));
+
+    const itemFollowers = game.items
+      .filter(i => i.type === "follower" && !rosterItemIds.has(i.id))
+      .map(i => ({ id: i.id, name: i.name, selectValue: `item:${i.id}`, isItem: true }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return [...actorFollowers, ...itemFollowers];
   }
 
   /* -------------------------------------------------- */
@@ -303,6 +361,27 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   static async #removeFollowerFromRoster(actorId) {
     const ids = HideoutApp.#getRosterFollowerIds().filter(id => id !== actorId);
     await saveWorldSetting(SETTINGS.FOLLOWERS, JSON.stringify(ids));
+  }
+
+  static #getRosterItemFollowerIds() {
+    try {
+      return JSON.parse(game.settings.get(MODULE_ID, SETTINGS.ITEM_FOLLOWERS) ?? "[]");
+    } catch {
+      return [];
+    }
+  }
+
+  static async #addItemFollowerToRoster(itemId) {
+    const ids = HideoutApp.#getRosterItemFollowerIds();
+    if (!ids.includes(itemId)) {
+      ids.push(itemId);
+      await saveWorldSetting(SETTINGS.ITEM_FOLLOWERS, JSON.stringify(ids));
+    }
+  }
+
+  static async #removeItemFollowerFromRoster(itemId) {
+    const ids = HideoutApp.#getRosterItemFollowerIds().filter(id => id !== itemId);
+    await saveWorldSetting(SETTINGS.ITEM_FOLLOWERS, JSON.stringify(ids));
   }
 
   #filterAndSortProjects(projects) {
@@ -558,10 +637,14 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const addFollowerSelect = this.element.querySelector("[data-add-follower-select]");
     if (addFollowerSelect) {
       addFollowerSelect.addEventListener("change", async (e) => {
-        const actorId = e.target.value;
-        if (!actorId) return;
+        const value = e.target.value;
+        if (!value) return;
         e.target.value = "";  // reset select
-        await HideoutApp.#addFollowerToRoster(actorId);
+        if (value.startsWith("item:")) {
+          await HideoutApp.#addItemFollowerToRoster(value.slice(5));
+        } else {
+          await HideoutApp.#addFollowerToRoster(value);
+        }
         this.render({ parts: ["roster"] });
       });
     }
@@ -575,9 +658,14 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const el = this.element;
     if (!el) return;
 
-    // Roster actor rows
+    // Roster actor rows (heroes + actor followers)
     for (const row of el.querySelectorAll("[data-drag-actor]")) {
       row.addEventListener("dragstart", this.#onDragRosterActor.bind(this), { once: false });
+    }
+
+    // Roster item follower rows
+    for (const row of el.querySelectorAll("[data-drag-item-follower]")) {
+      row.addEventListener("dragstart", this.#onDragRosterItemFollower.bind(this), { once: false });
     }
 
     // Stash items drag to actor (send item)
@@ -588,6 +676,11 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // Contributor pills drag to reassign
     for (const pill of el.querySelectorAll("[data-drag-contributor]")) {
       pill.addEventListener("dragstart", this.#onDragContributorPill.bind(this), { once: false });
+    }
+
+    // Item follower contributor pills drag to reassign
+    for (const pill of el.querySelectorAll("[data-drag-item-contributor]")) {
+      pill.addEventListener("dragstart", this.#onDragItemContributorPill.bind(this), { once: false });
     }
   }
 
@@ -717,6 +810,40 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // or by dropActorSheetData / canvas drop hooks (external). No dragend needed.
   }
 
+  #onDragRosterItemFollower(event) {
+    const row = event.currentTarget;
+    const itemId = row.dataset.actorId;
+    const item = game.items.get(itemId);
+    if (!item) return;
+
+    const dragData = {
+      type: "ItemFollower",
+      uuid: item.uuid,
+      id: item.id,
+      _dshideoutSource: "roster",
+    };
+    event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    event.dataTransfer.setData("application/x-dshideout-item-follower", JSON.stringify(dragData));
+    event.dataTransfer.effectAllowed = "copyMove";
+  }
+
+  #onDragItemContributorPill(event) {
+    event.stopPropagation();
+    const pill = event.currentTarget;
+    const itemId = pill.dataset.actorId;
+    const item = game.items.get(itemId);
+    if (!item) return;
+    const dragData = {
+      type: "ItemFollower",
+      uuid: item.uuid,
+      id: item.id,
+      _dshideoutSource: "contributorPill",
+    };
+    event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+    event.dataTransfer.setData("application/x-dshideout-item-follower", JSON.stringify(dragData));
+    event.dataTransfer.effectAllowed = "copyMove";
+  }
+
   #onDragContributorPill(event) {
     event.stopPropagation();
     const pill = event.currentTarget;
@@ -742,6 +869,30 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     if (!hasHideoutPermission()) {
       ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Permission.Denied"));
+      return;
+    }
+
+    // Handle item follower drags — they have no mentor (always unassigned), any player can assign
+    const itemFollowerRaw = event.dataTransfer.getData("application/x-dshideout-item-follower");
+    if (itemFollowerRaw) {
+      try {
+        const data = JSON.parse(itemFollowerRaw);
+        const item = await fromUuid(data.uuid);
+        if (!item || item.type !== "follower") return;
+        const projects = getProjects();
+        const targetProject = projects.find(p => p.id === projectId);
+        if (!targetProject || targetProject.completed) return;
+        const oldProjectId = await assignContributor(item.id, projectId);
+        if (oldProjectId && oldProjectId !== projectId) {
+          const oldProject = projects.find(p => p.id === oldProjectId);
+          ui.notifications.info(game.i18n.format("DSHIDEOUT.Projects.ReassignWarning", {
+            actor: item.name,
+            oldProject: oldProject?.name ?? "a project",
+            newProject: targetProject.name,
+          }));
+        }
+        this.render({ parts: ["roster", "main"] });
+      } catch { /* ignore malformed data */ }
       return;
     }
 
@@ -888,11 +1039,20 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     } catch {
       return;
     }
-    if (dragData?.type !== "Actor") return;
-    const actor = await fromUuid(dragData.uuid);
-    if (!actor || actor.type !== FOLLOWER_TYPE) return;
 
-    await HideoutApp.#addFollowerToRoster(actor.id);
+    if (dragData?.type === "Actor") {
+      const actor = await fromUuid(dragData.uuid);
+      if (!actor || actor.type !== FOLLOWER_TYPE) return;
+      await HideoutApp.#addFollowerToRoster(actor.id);
+    } else if (dragData?.type === "Item") {
+      const item = await fromUuid(dragData.uuid);
+      // Only world items (not compendium), must be system follower type
+      if (!item || item.type !== "follower" || item.pack) return;
+      await HideoutApp.#addItemFollowerToRoster(item.id);
+    } else {
+      return;
+    }
+
     this.render({ parts: ["roster"] });
   }
 
@@ -1358,10 +1518,12 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   static async #onRemoveFromRoster(event, target) {
     const actorId = target.dataset.actorId;
+    const followerType = target.dataset.followerType ?? "actor";
     if (!actorId) return;
 
-    const actor = game.actors.get(actorId);
-    const name = actor?.name ?? "this follower";
+    const name = followerType === "item"
+      ? (game.items.get(actorId)?.name ?? "this follower")
+      : (game.actors.get(actorId)?.name ?? "this follower");
 
     const confirmed = await foundry.applications.api.DialogV2.confirm({
       window: { title: game.i18n.localize("DSHIDEOUT.Roster.RemoveConfirmTitle") },
@@ -1369,9 +1531,13 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     });
     if (!confirmed) return;
 
-    // Remove from any project they contribute to
-    await removeContributor(actorId);
-    await HideoutApp.#removeFollowerFromRoster(actorId);
+    if (followerType === "item") {
+      await HideoutApp.#removeItemFollowerFromRoster(actorId);
+    } else {
+      // Remove from any project they contribute to
+      await removeContributor(actorId);
+      await HideoutApp.#removeFollowerFromRoster(actorId);
+    }
     this.render({ parts: ["roster", "main"] });
   }
 }

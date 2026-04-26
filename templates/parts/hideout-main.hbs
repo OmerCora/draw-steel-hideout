@@ -161,7 +161,7 @@
                             data-actor-id="{{this.id}}"
                             title="{{this.name}}"
                             draggable="true"
-                            data-drag-contributor>
+                            {{#if this.isItemFollower}}data-drag-item-contributor{{else}}data-drag-contributor{{/if}}>
                         <button type="button" class="dshideout-remove-contributor"
                                 data-action="removeContributor" data-actor-id="{{this.id}}"
                                 title="{{localize 'DSHIDEOUT.Projects.RemoveContributor'}}">

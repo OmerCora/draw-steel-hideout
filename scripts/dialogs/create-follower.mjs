@@ -76,6 +76,7 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
   #step = 1;
   #name = "";
   #mentorId = null;
+  #createAsItem = false;
 
   /** @inheritdoc */
   async _prepareContext(options) {
@@ -134,6 +135,7 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
       mentorOptions,
       selectedMentorId: this.#mentorId,
       canCreate: this.#canCreate(preset),
+      createAsItem: this.#createAsItem,
     };
   }
 
@@ -220,8 +222,27 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
     // Mentor select
     const mentorSel = el.querySelector("[name='mentorId']");
     if (mentorSel) {
+      mentorSel.disabled = this.#createAsItem;
       mentorSel.addEventListener("change", (e) => {
         this.#mentorId = e.target.value || null;
+      });
+    }
+
+    // Create as Item checkbox
+    const createAsItemCb = el.querySelector("[name='createAsItem']");
+    if (createAsItemCb) {
+      createAsItemCb.checked = this.#createAsItem;
+      createAsItemCb.addEventListener("change", (e) => {
+        this.#createAsItem = e.target.checked;
+        const mentorSelect = el.querySelector("[name='mentorId']");
+        if (mentorSelect) {
+          mentorSelect.disabled = this.#createAsItem;
+          if (this.#createAsItem) {
+            // Item followers cannot have mentors — force to None
+            this.#mentorId = null;
+            mentorSelect.value = "";
+          }
+        }
       });
     }
   }
@@ -256,6 +277,7 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
     this.#selectedSkills.clear();
     this.#selectedChar = null;
     this.#selectedLanguages = [];
+    this.#createAsItem = false;
     this.render();
   }
 
@@ -269,12 +291,6 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
       return;
     }
 
-    // Get or create the Hideout folder
-    let folder = game.folders.find(f => f.type === "Actor" && f.name === HIDEOUT_FOLDER);
-    if (!folder) {
-      folder = await Folder.create({ name: HIDEOUT_FOLDER, type: "Actor" });
-    }
-
     // Build characteristics
     const chars = { ...preset.charDefault };
     if (preset.charChoices && this.#selectedChar) {
@@ -284,46 +300,86 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
     // Build languages
     const languages = [...preset.languages.auto, ...this.#selectedLanguages.filter(Boolean)];
 
-    // Build actor data
-    const actorData = {
-      name,
-      type: FOLLOWER_TYPE,
-      folder: folder.id,
-      img: "icons/svg/mystery-man.svg",
-      system: {
-        // Stamina max must be > 0 or the system marks the actor as dead
-        stamina: { max: 1 },
-        // Characteristics
-        characteristics: {
-          might: { value: chars.might ?? 0 },
-          agility: { value: chars.agility ?? 0 },
-          reason: { value: chars.reason ?? 0 },
-          intuition: { value: chars.intuition ?? 0 },
-          presence: { value: chars.presence ?? 0 },
-        },
-        // Skills
-        skills: {
-          value: [...this.#selectedSkills],
-        },
-        // Retainer mentor field
-        ...(this.#mentorId ? { retainer: { mentor: this.#mentorId } } : {}),
-        // Biography
-        biography: {
-          value: "",
-          languages,
-        },
-      },
-    };
+    if (this.#createAsItem) {
+      // Create as system follower Item type
+      let folder = game.folders.find(f => f.type === "Item" && f.name === HIDEOUT_FOLDER);
+      if (!folder) {
+        folder = await Folder.create({ name: HIDEOUT_FOLDER, type: "Item" });
+      }
 
-    const actor = await Actor.create(actorData);
-    if (!actor) {
-      ui.notifications.error(game.i18n.localize("DSHIDEOUT.CreateFollower.Error"));
-      return;
+      const itemData = {
+        name,
+        type: "follower",
+        folder: folder.id,
+        img: "icons/svg/mystery-man.svg",
+        system: {
+          type: preset.key,
+          characteristics: {
+            might: { value: chars.might ?? 0 },
+            agility: { value: chars.agility ?? 0 },
+            reason: { value: chars.reason ?? 0 },
+            intuition: { value: chars.intuition ?? 0 },
+            presence: { value: chars.presence ?? 0 },
+          },
+          skills: { value: [...this.#selectedSkills] },
+          languages: { value: languages },
+        },
+      };
+
+      const item = await Item.create(itemData);
+      if (!item) {
+        ui.notifications.error(game.i18n.localize("DSHIDEOUT.CreateFollower.Error"));
+        return;
+      }
+
+      ui.notifications.info(game.i18n.format("DSHIDEOUT.CreateFollower.CreatedAsItem", { name }));
+    } else {
+      // Create as Follower Actor type
+      let folder = game.folders.find(f => f.type === "Actor" && f.name === HIDEOUT_FOLDER);
+      if (!folder) {
+        folder = await Folder.create({ name: HIDEOUT_FOLDER, type: "Actor" });
+      }
+
+      const actorData = {
+        name,
+        type: FOLLOWER_TYPE,
+        folder: folder.id,
+        img: "icons/svg/mystery-man.svg",
+        system: {
+          // Stamina max must be > 0 or the system marks the actor as dead
+          stamina: { max: 1 },
+          // Characteristics
+          characteristics: {
+            might: { value: chars.might ?? 0 },
+            agility: { value: chars.agility ?? 0 },
+            reason: { value: chars.reason ?? 0 },
+            intuition: { value: chars.intuition ?? 0 },
+            presence: { value: chars.presence ?? 0 },
+          },
+          // Skills
+          skills: {
+            value: [...this.#selectedSkills],
+          },
+          // Retainer mentor field
+          ...(this.#mentorId ? { retainer: { mentor: this.#mentorId } } : {}),
+          // Biography
+          biography: {
+            value: "",
+            languages,
+          },
+        },
+      };
+
+      const actor = await Actor.create(actorData);
+      if (!actor) {
+        ui.notifications.error(game.i18n.localize("DSHIDEOUT.CreateFollower.Error"));
+        return;
+      }
+
+      ui.notifications.info(game.i18n.format("DSHIDEOUT.CreateFollower.Created", { name }));
     }
 
-    ui.notifications.info(game.i18n.format("DSHIDEOUT.CreateFollower.Created", { name }));
     await this.close();
-
     // Refresh Hideout app roster
     HideoutApp._instance?.render({ parts: ["roster"] });
   }

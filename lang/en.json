@@ -97,6 +97,8 @@
   "DSHIDEOUT.CreateFollower.MentorOptional": "optional",
   "DSHIDEOUT.CreateFollower.NoMentor": "No Mentor",
   "DSHIDEOUT.CreateFollower.Create": "Create Follower",
+  "DSHIDEOUT.CreateFollower.CreateAsItem": "Create Follower as Item",
+  "DSHIDEOUT.CreateFollower.CreatedAsItem": "Follower item \"{name}\" created in the Hideout folder.",
   "DSHIDEOUT.CreateFollower.TooManySkills": "You can only select {count} skills.",
   "DSHIDEOUT.CreateFollower.NoName": "Please provide a name for the follower.",
   "DSHIDEOUT.CreateFollower.Error": "Failed to create the follower.",

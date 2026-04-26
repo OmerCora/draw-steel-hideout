@@ -36,7 +36,7 @@
         {{#each followers}}
           <li class="dshideout-roster-row {{#if this.contributingProjectId}}is-contributing{{/if}}"
               draggable="{{this.isDraggable}}"
-              data-drag-actor
+              {{#if this.isItemFollower}}data-drag-item-follower{{else}}data-drag-actor{{/if}}
               data-actor-id="{{this.id}}"
               data-tooltip="{{this.followerTooltip}}"
               data-tooltip-class="draw-steel-hideout-tooltip">
@@ -47,6 +47,7 @@
                       class="dshideout-roster-remove-btn"
                       data-action="removeFromRoster"
                       data-actor-id="{{this.id}}"
+                      data-follower-type="{{#if this.isItemFollower}}item{{else}}actor{{/if}}"
                       title="{{localize 'DSHIDEOUT.Roster.RemoveFollower'}}">
                 <i class="fas fa-times"></i>
               </button>
@@ -76,7 +77,7 @@
           <select class="dshideout-select dshideout-add-follower-select" data-add-follower-select>
             <option value="">{{localize "DSHIDEOUT.Roster.AddFollowerSelect"}}</option>
             {{#each availableFollowers}}
-              <option value="{{this.id}}">{{this.name}}</option>
+              <option value="{{this.selectValue}}">{{this.name}}{{#if this.isItem}} (Item){{/if}}</option>
             {{/each}}
           </select>
         </div>

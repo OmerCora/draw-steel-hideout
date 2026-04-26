@@ -17,6 +17,7 @@ export const SETTINGS = {
   PROJECTS: "projects",
   STASH: "stash",
   FOLLOWERS: "roster-followers",
+  ITEM_FOLLOWERS: "roster-item-followers",
   ARCHIVES: "archives",
   MINIMUM_ROLE: "minimumRole",
 };

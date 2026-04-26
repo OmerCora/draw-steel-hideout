@@ -44,6 +44,13 @@ Hooks.once("init", () => {
     default: "[]",
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.ITEM_FOLLOWERS, {
+    scope: "world",
+    config: false,
+    type: String,
+    default: "[]",
+  });
+
   game.settings.register(MODULE_ID, SETTINGS.MINIMUM_ROLE, {
     name: "DSHIDEOUT.Settings.MinimumRole.Name",
     hint: "DSHIDEOUT.Settings.MinimumRole.Hint",
