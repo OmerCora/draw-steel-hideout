@@ -1311,7 +1311,7 @@
 }
 
 .draw-steel-hideout .dshideout-btn-secondary {
-  border-color: color-mix(in srgb, currentColor 30%, transparent);
+  border-color: rgba(128, 128, 128, 0.4);
 }
 
 .draw-steel-hideout .dshideout-btn-danger {

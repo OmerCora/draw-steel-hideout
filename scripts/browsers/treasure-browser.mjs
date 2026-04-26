@@ -354,7 +354,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
         <button type="button" class="dshideout-btn dshideout-btn-secondary" data-action="addSelectedToArchives">
           <i class="fas fa-book-open"></i> ${game.i18n.localize("DSHIDEOUT.TreasureBrowser.AddToArchives")}
         </button>
-        <button type="button" class="dshideout-btn dshideout-btn-primary" data-action="addSelectedToStash">
+        <button type="button" class="dshideout-btn dshideout-btn-secondary" data-action="addSelectedToStash">
           <i class="fas fa-box-open"></i> ${game.i18n.localize("DSHIDEOUT.TreasureBrowser.AddToStash")}
         </button>
       `;
