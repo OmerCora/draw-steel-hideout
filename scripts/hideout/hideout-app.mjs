@@ -20,6 +20,8 @@ import { ProjectBrowserApp } from "../browsers/project-browser.mjs";
 import { TreasureBrowserApp } from "../browsers/treasure-browser.mjs";
 import { CreateFollowerDialog } from "../dialogs/create-follower.mjs";
 import { ProgressProjectsDialog } from "../dialogs/progress-projects.mjs";
+import { findDefaultEventTableUuid } from "./project-events.mjs";
+import { ProjectSettingsDialog } from "../dialogs/project-settings.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -61,6 +63,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       switchTab: HideoutApp.#onSwitchTab,
       // Projects
       removeProject: HideoutApp.#onRemoveProject,
+      openProjectSettings: HideoutApp.#onOpenProjectSettings,
       toggleDescription: HideoutApp.#onToggleDescription,
       removeContributor: HideoutApp.#onRemoveContributor,
       obtainYield: HideoutApp.#onObtainYield,
@@ -995,6 +998,11 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   async _addProjectFromItem(item, { additionalDetail = "" } = {}) {
     const sys = item.system;
+    // Pre-resolve the default event table UUID for this project name.
+    let defaultEventTableUuid = null;
+    try { defaultEventTableUuid = await findDefaultEventTableUuid(item.name); }
+    catch (err) { console.warn("draw-steel-hideout | event-table lookup failed:", err); }
+
     const result = await addProject({
       uuid: item.uuid,
       name: item.name,
@@ -1009,6 +1017,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       yieldAmount: sys.yield?.amount ?? "1",
       yieldDisplay: sys.yield?.display ?? "",
       additionalDetail,
+      eventTableUuid: defaultEventTableUuid,
     });
 
     if (!result) {
@@ -1106,6 +1115,13 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.render({ parts: ["roster", "main"] });
   }
 
+  static async #onOpenProjectSettings(event, target) {
+    const projectId = target.dataset.projectId;
+    const project = getProjects().find(p => p.id === projectId);
+    if (!project) return;
+    new ProjectSettingsDialog({ project, hideoutApp: this }).render({ force: true });
+  }
+
   static async #onRemoveContributor(event, target) {
     const actorId = target.dataset.actorId;
     await removeContributor(actorId);
@@ -1174,7 +1190,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     });
     if (!confirmed) return;
 
-    await updateProject(projectId, { completed: false, points: 0, yieldObtained: false });
+    await updateProject(projectId, { completed: false, points: 0, yieldObtained: false, eventsTriggeredMilestones: [] });
     await ChatMessage.create({
       content: `<p><strong>${game.i18n.localize("DSHIDEOUT.Chat.ProjectRestarted")}</strong> — ${game.i18n.format("DSHIDEOUT.Chat.ProjectRestartedMsg", { project: project.name })}</p>`,
       speaker: { alias: game.i18n.localize("DSHIDEOUT.Chat.Alias") },

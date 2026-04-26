@@ -9,7 +9,7 @@ import { getFollowerSheetClass } from "./sheets/follower-sheet.mjs";
 import { HideoutApp } from "./hideout/hideout-app.mjs";
 import { getStash, removeStashItem, changeStashQuantity } from "./hideout/stash-manager.mjs";
 import { registerSocket, HIDEOUT_SETTING_KEYS } from "./socket.mjs";
-
+import { ProgressProjectsDialog } from "./dialogs/progress-projects.mjs";
 /* -------------------------------------------------- */
 /*  Init                                              */
 /* -------------------------------------------------- */
@@ -72,6 +72,8 @@ Hooks.once("init", () => {
     `modules/${MODULE_ID}/templates/dialogs/create-follower.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/create-follower-footer.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/progress-projects.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/project-settings.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/project-settings-footer.hbs`,
     // Follower actor sheet templates
     `modules/${MODULE_ID}/templates/sheets/follower-sheet/stats.hbs`,
     `modules/${MODULE_ID}/templates/sheets/follower-sheet/biography.hbs`,
@@ -124,6 +126,41 @@ Hooks.on("preCreateActor", (actor, data, options, userId) => {
     actor.updateSource({ "system.stamina.max": 1 });
   }
 });
+
+/* -------------------------------------------------- */
+/*  Project Event "Proceed with Project Rolls" button */
+/* -------------------------------------------------- */
+
+/**
+ * Wire the chat-message Proceed button so the GM can resume a deferred
+ * project roll batch after reading the "Before the roll" event(s).
+ * Supports both the legacy `renderChatMessage` (jQuery html) and the
+ * v13+ `renderChatMessageHTML` (HTMLElement) hooks.
+ */
+function _wireProceedButton(root) {
+  if (!root) return;
+  const el = (root instanceof HTMLElement) ? root
+    : (root.jquery ? root[0] : (root[0] ?? root));
+  if (!el?.querySelectorAll) return;
+  for (const btn of el.querySelectorAll('[data-action="dshideoutProceedProjectRolls"]')) {
+    if (btn.dataset.dshideoutWired) continue;
+    btn.dataset.dshideoutWired = "1";
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const runId = btn.dataset.runId;
+      if (!runId) return;
+      const ok = ProgressProjectsDialog.resolvePendingProceed(runId);
+      if (ok) {
+        btn.disabled = true;
+        btn.classList.add("dshideout-event-proceed-btn-used");
+      } else {
+        ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Events.ProceedExpired"));
+      }
+    });
+  }
+}
+Hooks.on("renderChatMessage",     (app, html) => _wireProceedButton(html));
+Hooks.on("renderChatMessageHTML", (app, html) => _wireProceedButton(html));
 
 /* -------------------------------------------------- */
 /*  Sidebar / Scene Controls Button                   */
@@ -183,7 +220,18 @@ Hooks.on("updateSetting", (setting) => {
 
 Hooks.on("dshideout:refresh", () => {
   if (!HideoutApp._instance?.rendered) return;
-  HideoutApp._instance.render({ parts: ["roster", "main"] });
+  // Debounce: GM-side write fires both `updateSetting` (broadcast by Foundry)
+  // and our backup `refreshHideout` socket within a few ms of each other.
+  // Two renders in close succession cause the progress-bar animation to be
+  // lost (the first render's rAF chain races against the second render which
+  // replaces the DOM with no-animate markup). Coalesce into a single render.
+  if (HideoutApp._refreshTimer) return;
+  HideoutApp._refreshTimer = setTimeout(() => {
+    HideoutApp._refreshTimer = null;
+    if (HideoutApp._instance?.rendered) {
+      HideoutApp._instance.render({ parts: ["roster", "main"] });
+    }
+  }, 50);
 });
 
 /* -------------------------------------------------- */

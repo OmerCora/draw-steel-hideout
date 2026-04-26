@@ -5,8 +5,14 @@
  */
 
 import { MODULE_ID, FOLLOWER_TYPE, CHARACTERISTIC_ROLL_KEYS } from "../config.mjs";
-import { getProjects, addProjectPoints } from "../hideout/project-manager.mjs";
+import { getProjects, addProjectPoints, updateProject } from "../hideout/project-manager.mjs";
 import { HideoutApp } from "../hideout/hideout-app.mjs";
+import {
+  evaluateProjectEventTrigger,
+  rollEventTable,
+  postEventChatMessage,
+  postProceedButtonMessage,
+} from "../hideout/project-events.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -131,6 +137,24 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
   /* -------------------------------------------------- */
 
   static async #onRollAll(event, target) {
+    // Prevent double-clicks from triggering multiple roll sequences.
+    if (target.disabled) return;
+    target.disabled = true;
+    const originalHTML = target.innerHTML;
+    target.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${game.i18n.localize("DSHIDEOUT.ProgressProjects.RollInProgress")}`;
+
+    try {
+      await ProgressProjectsDialog.#runRollAll.call(this);
+    } finally {
+      // Restore in case an error occurs before the dialog closes.
+      if (!this.closing && this.rendered) {
+        target.disabled = false;
+        target.innerHTML = originalHTML;
+      }
+    }
+  }
+
+  static async #runRollAll() {
     const projects = getProjects().filter(p => !p.completed && p.contributorIds.length > 0);
     if (!projects.length) return;
 
@@ -146,25 +170,117 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       const project = projects.find(p => p.id === projectId);
       if (!actor || !project) continue;
       const opts = this.#rollOptions.get(actorId) ?? { edges: 0, banes: 0 };
-      const charKey = project.rollCharacteristic?.[0] ?? "might";
-      const rollKey = CHARACTERISTIC_ROLL_KEYS[charKey] ?? "M";
+      // Pick the highest-value applicable characteristic for this actor,
+      // matching the logic used in _prepareContext for display.
+      const chars = project.rollCharacteristic ?? [];
+      const bestCharKey = chars.length
+        ? chars.reduce((best, c) => {
+            const val = actor.system.characteristics?.[c]?.value ?? 0;
+            return val > (actor.system.characteristics?.[best]?.value ?? -Infinity) ? c : best;
+          }, chars[0])
+        : "might";
+      const rollKey = CHARACTERISTIC_ROLL_KEYS[bestCharKey] ?? "M";
       const formula = `2d10 + @${rollKey}`;
       const rollData = actor.getRollData?.() ?? {};
-      rowConfigs.push({ actor, project, opts, charKey, formula, rollData });
+      rowConfigs.push({ actor, project, opts, charKey: bestCharKey, formula, rollData });
     }
 
     if (!rowConfigs.length) return;
 
-    // â”€â”€ Main rolls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Project events (pre-roll resolution) ──────────────────────────────
+    // Group projects involved in this run, evaluate per-project triggers,
+    // roll their event tables, and split into before/after the project rolls.
+    const projectsInRun = [...new Map(rowConfigs.map(c => [c.project.id, c.project])).values()];
+    const eventQueue = []; // { project, event, timing, trigger }
+    for (const project of projectsInRun) {
+      const trigger = await evaluateProjectEventTrigger(project);
+      if (!trigger) continue;
+      const tableUuid = project.eventTableUuid;
+      if (!tableUuid) {
+        ui.notifications.warn(game.i18n.format("DSHIDEOUT.Events.NoTableConfigured", { project: project.name }));
+        continue;
+      }
+      const event = await rollEventTable(tableUuid);
+      if (!event) {
+        ui.notifications.warn(game.i18n.format("DSHIDEOUT.Events.RollFailed", { project: project.name }));
+        continue;
+      }
+      eventQueue.push({ project, event, timing: event.timing, trigger });
+    }
+
+    const beforeEvents = eventQueue.filter(e => e.timing === "before");
+    const afterEvents  = eventQueue.filter(e => e.timing === "after");
+
+    // ── Phase 1: post all "before" events ─────────────────────────────────
+    for (const ev of beforeEvents) {
+      const displayName = ev.project.additionalDetail
+        ? `${ev.project.name} (${ev.project.additionalDetail})`
+        : ev.project.name;
+      await postEventChatMessage({
+        project: ev.project,
+        event: ev.event,
+        privateToGM: ev.project.postEventsPrivate !== false,
+        displayName,
+      });
+    }
+
+    // Close the dialog before posting Proceed button so the GM can see it.
+    await this.close();
+
+    // ── Phase 2: gate behind Proceed button if any "before" ───────────────
+    if (beforeEvents.length) {
+      const runId = foundry.utils.randomID();
+      const proceed = new Promise((resolve) => {
+        ProgressProjectsDialog._pendingProceeds.set(runId, resolve);
+      });
+      await postProceedButtonMessage(runId);
+      await proceed;  // resumes when GM clicks the button
+    }
+
+    // ── Phase 3: do the project rolls + breakthrough chain ────────────────
+    await ProgressProjectsDialog.#executeRollPipeline(rowConfigs);
+
+    // ── Phase 4: mark milestones as triggered ─────────────────────────────
+    for (const ev of eventQueue) {
+      if (ev.trigger.reason === "milestone" && ev.trigger.fraction != null) {
+        const fresh = getProjects().find(p => p.id === ev.project.id);
+        if (!fresh) continue;
+        const list = Array.from(new Set([...(fresh.eventsTriggeredMilestones ?? []), ev.trigger.fraction]));
+        await updateProject(ev.project.id, { eventsTriggeredMilestones: list });
+      }
+    }
+
+    // ── Phase 5: post all "after" events ──────────────────────────────────
+    for (const ev of afterEvents) {
+      const displayName = ev.project.additionalDetail
+        ? `${ev.project.name} (${ev.project.additionalDetail})`
+        : ev.project.name;
+      await postEventChatMessage({
+        project: ev.project,
+        event: ev.event,
+        privateToGM: ev.project.postEventsPrivate !== false,
+        displayName,
+      });
+    }
+
+    // No explicit render needed — _saveProjects fires updateSetting which triggers
+    // the debounced dshideout:refresh hook, keeping all clients in sync cleanly.
+  }
+
+  /**
+   * Execute the main roll batch + breakthrough chain. Extracted so it can
+   * be deferred behind the "Proceed with Project Rolls" button.
+   * @param {object[]} rowConfigs
+   */
+  static async #executeRollPipeline(rowConfigs) {
     const mainBatch = await ProgressProjectsDialog.#rollBatch(rowConfigs);
     if (game.dice3d) {
       await Promise.all(mainBatch.map(r => game.dice3d.showForRoll(r.roll, game.user, true)));
     }
     await ProgressProjectsDialog.#applyAndPost(mainBatch, 0);
 
-    // â”€â”€ Breakthrough chain â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // Each level: actors who rolled natural 19-20 get another roll.
-    // Each level posts its own separate chat message and point update.
+    // Breakthrough chain: each natural 19-20 grants another roll, posted as
+    // a separate chat message and points update.
     let prevBatch = mainBatch;
     for (let depth = 1; depth <= 10; depth++) {
       const breakthroughConfigs = prevBatch
@@ -179,10 +295,24 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       await ProgressProjectsDialog.#applyAndPost(btBatch, depth);
       prevBatch = btBatch;
     }
-
-    await this.close();
-    HideoutApp._instance?.render({ parts: ["main"] });
   }
+
+  /**
+   * Resolves a pending "Proceed with Project Rolls" run. Called from the
+   * `renderChatMessage` hook when the GM clicks the chat button.
+   * @param {string} runId
+   * @returns {boolean} whether a pending run was resolved.
+   */
+  static resolvePendingProceed(runId) {
+    const resolver = ProgressProjectsDialog._pendingProceeds.get(runId);
+    if (!resolver) return false;
+    ProgressProjectsDialog._pendingProceeds.delete(runId);
+    resolver();
+    return true;
+  }
+
+  /** @type {Map<string, () => void>} */
+  static _pendingProceeds = new Map();
 
   /**
    * Roll a batch of project rolls and return enriched result objects.

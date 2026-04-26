@@ -80,6 +80,13 @@
               {{!-- Trash + chevron always on far right --}}
               <div class="dshideout-project-topbar-right">
                 {{#if @root.isGM}}
+                  {{#unless this.completed}}
+                    <button type="button" class="dshideout-project-remove-btn"
+                            data-action="openProjectSettings" data-project-id="{{this.id}}"
+                            title="{{localize 'DSHIDEOUT.Projects.SettingsTitle'}}">
+                      <i class="fas fa-cog"></i>
+                    </button>
+                  {{/unless}}
                   <button type="button" class="dshideout-project-remove-btn"
                           data-action="removeProject" data-project-id="{{this.id}}"
                           title="{{localize 'DSHIDEOUT.Projects.Remove'}}">

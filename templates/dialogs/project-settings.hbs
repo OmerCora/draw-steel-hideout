@@ -1,0 +1,47 @@
+<form class="dshideout-project-settings-form">
+  <div class="dshideout-form-section">
+    <h3 class="dshideout-project-settings-name">{{project.name}}</h3>
+  </div>
+
+  {{!-- Additional Details --}}
+  <div class="dshideout-form-row">
+    <label for="dshideout-ps-detail">{{localize "DSHIDEOUT.Projects.AdditionalDetailLabel"}}</label>
+    <input type="text" id="dshideout-ps-detail" name="additionalDetail"
+           value="{{additionalDetail}}" maxlength="80"
+           placeholder="{{localize 'DSHIDEOUT.ProjectBrowser.DetailPlaceholder'}}" />
+    <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Projects.AdditionalDetailHint"}}</p>
+  </div>
+
+  {{!-- Project Events mode --}}
+  <div class="dshideout-form-row">
+    <label for="dshideout-ps-mode">{{localize "DSHIDEOUT.Events.ModeLabel"}}</label>
+    <select id="dshideout-ps-mode" name="eventsMode">
+      {{#each eventModeChoices}}
+        <option value="{{this.value}}" {{#if (dshideout-eq this.value ../currentMode)}}selected{{/if}}>
+          {{localize this.label}}
+        </option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{!-- Event Table --}}
+  <div class="dshideout-form-row">
+    <label for="dshideout-ps-table">{{localize "DSHIDEOUT.Events.TableLabel"}}</label>
+    <select id="dshideout-ps-table" name="eventTableUuid">
+      {{#each tables}}
+        <option value="{{this.uuid}}" {{#if (dshideout-eq this.uuid ../currentUuid)}}selected{{/if}}>
+          {{this.name}}{{#if (dshideout-eq this.source "world")}} (World){{/if}}
+        </option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{!-- Post Event Roll as Private Message --}}
+  <div class="dshideout-form-row dshideout-form-row-checkbox">
+    <label>
+      <input type="checkbox" name="postEventsPrivate" {{#if postPrivate}}checked{{/if}} />
+      {{localize "DSHIDEOUT.Events.PostPrivateLabel"}}
+    </label>
+    <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Events.PostPrivateHint"}}</p>
+  </div>
+</form>

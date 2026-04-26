@@ -2079,7 +2079,20 @@
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 8px;
+  table-layout: fixed;
 }
+
+.dshideout-progress-table th:nth-child(1),
+.dshideout-progress-table td:nth-child(1) { width: 42%; }
+
+.dshideout-progress-table th:nth-child(2),
+.dshideout-progress-table td:nth-child(2) { width: 28%; }
+
+.dshideout-progress-table th:nth-child(3),
+.dshideout-progress-table td:nth-child(3) { width: 18%; white-space: nowrap; }
+
+.dshideout-progress-table th:nth-child(4),
+.dshideout-progress-table td:nth-child(4) { width: 12%; }
 
 .dshideout-progress-table th,
 .dshideout-progress-table td {
@@ -2116,4 +2129,94 @@
 .dshideout-project-summary p {
   margin: 2px 0;
   font-size: 0.82rem;
+}
+
+/* --- Project Settings dialog --------------------------------- */
+
+.draw-steel-hideout #dshideout-project-settings .window-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dshideout-project-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.dshideout-project-settings-name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  padding-bottom: 6px;
+}
+
+/* --- Project Event chat messages ----------------------------- */
+
+.dshideout-event-chat {
+  border: 1px solid rgba(192, 132, 58, 0.5);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: rgba(192, 132, 58, 0.06);
+}
+
+.dshideout-event-chat-header {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.dshideout-event-chat-header i {
+  margin-right: 4px;
+  color: rgba(192, 132, 58, 0.9);
+}
+
+.dshideout-event-chat-table {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.dshideout-event-chat-result {
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.dshideout-event-proceed {
+  border: 1px dashed color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: rgba(128, 128, 128, 0.06);
+  text-align: center;
+}
+
+.dshideout-event-proceed p {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.dshideout-event-proceed-btn {
+  background: rgba(192, 132, 58, 0.18);
+  border: 1px solid rgba(192, 132, 58, 0.55);
+  color: inherit;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.dshideout-event-proceed-btn:hover:not(:disabled) {
+  background: rgba(192, 132, 58, 0.3);
+}
+
+.dshideout-event-proceed-btn:disabled,
+.dshideout-event-proceed-btn-used {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
