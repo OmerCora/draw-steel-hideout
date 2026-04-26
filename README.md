@@ -19,6 +19,10 @@ This module gives the Director and the party a single window for everything that
 - **Yield items** link a compendium item as the project reward; when the project completes a button appears to add it to the party stash
 - **Restart completed projects** to reset progress and reuse the same setup
 - **Filter and sort** by name, progress, or contributor count
+- **Project Events** are automated and can be configured based on rules described in Draw Steel: Heroes
+
+<img width="1184" height="783" alt="Screenshot 2026-04-25 234248" src="https://github.com/user-attachments/assets/65e260fa-ac63-4617-8bea-6cea0b7b73b1" />
+
 
 ### Followers (Artisan & Sage)
 - A new type of actor: Follower
@@ -26,6 +30,10 @@ This module gives the Director and the party a single window for everything that
 - Hover a follower to see their speciality and mentor
 - A quick follower creation interface following the rules for Artisan and Sage
 - Drag followers onto projects just like heroes; they contribute their own project roll with the correct characteristic automatically
+
+<img width="524" height="256" alt="Screenshot 2026-04-25 235201" src="https://github.com/user-attachments/assets/bfc787ff-9d75-408e-95d0-7d26a8f80712" />
+
+<img width="530" height="735" alt="Screenshot 2026-04-26 001539" src="https://github.com/user-attachments/assets/c6d7bd7d-849c-4d6d-a6ac-ccc1e86a9112" />
 
 ### Roll All 
 
@@ -35,17 +43,27 @@ Opens a table with every contributor, their characteristic value, and edge/bane 
 - Posts a chat message with each actor, their roll broken down as dice total + modifier and the points earned
 - Automatically handles **Breakthrough**: any natural roll of 19-20 triggers another roll for that actor, posted as its own "Breakthrough Roll!" chat message. The ⚡ icon in the chat table shows who triggered each one.
 
+<img width="601" height="525" alt="Screenshot 2026-04-26 002913" src="https://github.com/user-attachments/assets/ee3b2527-fabd-42b7-9430-b44d836c8253" />
+
+
 ### Party Stash
 
 - Add items from the Treasure Browser into the stash
 - Items group by category with echelon labels
 
-### Archive
+<img width="1181" height="782" alt="Screenshot 2026-04-25 234301" src="https://github.com/user-attachments/assets/2dbca810-5ea8-40a9-bee6-568c445cffce" />
+
+
+### Archives
 
 - Save crafting recipes and blueprints discovered during the campaign
 - Add items from the Treasure Browser with the **Add to Archives** button
 - Items are listed by category with expandable descriptions and project data
 - Archive entries with crafting data get a **Begin Crafting Project** button that opens the project directly on the Project Board
+- Track project sources (crafting materials)
+
+<img width="1234" height="818" alt="Screenshot 2026-04-26 004141" src="https://github.com/user-attachments/assets/3cdd47d1-96b9-43ef-9700-de581b8b5824" />
+
 
 ### Treasure Browser
 
@@ -53,7 +71,18 @@ Opens a table with every contributor, their characteristic value, and edge/bane 
 - Filter by name and echelon (1-4)
 - Add to Stash, Add to Archives, or Begin Crafting Project directly from the browser
 
-## Screenshots
+<img width="725" height="789" alt="Screenshot 2026-04-25 232949" src="https://github.com/user-attachments/assets/9d49e664-69ab-494e-929c-79ea525a8652" />
+
+
+## Project Browser
+
+<img width="763" height="853" alt="Screenshot 2026-04-25 232914" src="https://github.com/user-attachments/assets/8d27ee13-1557-4ea7-a804-3d78386d950c" />
+
+## Chat Messages
+
+<img width="289" height="357" alt="Screenshot 2026-04-26 005129" src="https://github.com/user-attachments/assets/dc176251-2742-4993-bf86-a285bcc0af6e" />
+<img width="288" height="451" alt="Screenshot 2026-04-26 005112" src="https://github.com/user-attachments/assets/7c8f7967-b561-416e-bf3c-84fa902d4624" />
+<img width="294" height="89" alt="Screenshot 2026-04-26 004957" src="https://github.com/user-attachments/assets/79b4fc41-5945-402d-8f1e-d46c73349771" />
 
 
 ## Installation
