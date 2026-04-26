@@ -1706,6 +1706,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 16px;
 }
 
 .draw-steel-hideout .dshideout-step-heading {
@@ -1879,6 +1880,7 @@
   flex-direction: column !important;
   overflow: hidden !important;
   padding: 0 !important;
+  height: 100%;
 }
 
 /* The dialog PART scrolls */

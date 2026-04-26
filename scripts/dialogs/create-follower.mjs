@@ -39,10 +39,10 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
   static DEFAULT_OPTIONS = {
     id: "dshideout-create-follower",
     classes: ["draw-steel-hideout", "dshideout-dialog"],
-    position: { width: 520, height: 600 },
+    position: { width: 520, height: 720 },
     window: {
       title: "DSHIDEOUT.CreateFollower.Title",
-      resizable: false,
+      resizable: true,
       icon: "fa-solid fa-user-plus",
     },
     actions: {
@@ -110,6 +110,7 @@ export class CreateFollowerDialog extends HandlebarsApplicationMixin(Application
 
     return {
       step: this.#step,
+      isStep2: this.#step === 2,
       presets: Object.values(FOLLOWER_PRESETS).map(p => ({
         key: p.key,
         label: game.i18n.localize(p.nameKey),

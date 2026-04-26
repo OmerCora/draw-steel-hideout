@@ -1,11 +1,8 @@
 {{!-- Create Follower Dialog – Footer part --}}
-{{!-- Always rendered, but button only shows in step 2 --}}
-{{#dshideout-eq step 2}}
-  <div class="dshideout-dialog-footer-bar">
-    <button type="button" class="dshideout-btn dshideout-btn-primary"
-            data-action="createFollower"
-            {{#unless canCreate}}disabled{{/unless}}>
-      <i class="fas fa-user-plus"></i> {{localize "DSHIDEOUT.CreateFollower.Create"}}
-    </button>
-  </div>
-{{/dshideout-eq}}
+<div class="dshideout-dialog-footer-bar">
+  <button type="button" class="dshideout-btn dshideout-btn-primary"
+          data-action="createFollower"
+          {{#unless canCreate}}disabled{{/unless}}>
+    <i class="fas fa-user-plus"></i> {{localize "DSHIDEOUT.CreateFollower.Create"}}
+  </button>
+</div>
