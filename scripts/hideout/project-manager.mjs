@@ -98,6 +98,7 @@ export async function addProject(itemData) {
     eventTableUuid: itemData.eventTableUuid ?? null,
     postEventsPrivate: itemData.postEventsPrivate ?? true,
     eventsTriggeredMilestones: [],
+    individuallyRolledIds: [],
   };
 
   projects.push(project);
@@ -197,6 +198,64 @@ export async function removeContributor(actorId) {
  */
 export function getContributingProject(actorId) {
   return _loadProjects().find(p => p.contributorIds.includes(actorId)) ?? null;
+}
+
+/**
+ * Mark a contributor as having rolled individually for the given project.
+ * @param {string} projectId
+ * @param {string} actorId
+ */
+export async function markIndividualRoll(projectId, actorId) {
+  const projects = _loadProjects();
+  const project = projects.find(p => p.id === projectId);
+  if (!project) return;
+  const list = Array.isArray(project.individuallyRolledIds) ? project.individuallyRolledIds : [];
+  if (!list.includes(actorId)) list.push(actorId);
+  project.individuallyRolledIds = list;
+  await _saveProjects(projects);
+}
+
+/**
+ * Returns true if the contributor has already rolled individually for this project.
+ * @param {string} projectId
+ * @param {string} actorId
+ * @returns {boolean}
+ */
+export function hasIndividualRoll(projectId, actorId) {
+  const project = _loadProjects().find(p => p.id === projectId);
+  if (!project) return false;
+  return Array.isArray(project.individuallyRolledIds)
+    && project.individuallyRolledIds.includes(actorId);
+}
+
+/**
+ * Reset individual-roll state for every project.
+ */
+export async function clearAllIndividualRolls() {
+  const projects = _loadProjects();
+  let changed = false;
+  for (const project of projects) {
+    if (project.individuallyRolledIds?.length) {
+      project.individuallyRolledIds = [];
+      changed = true;
+    }
+  }
+  if (changed) await _saveProjects(projects);
+}
+
+/**
+ * Remove a single contributor's individual-roll mark for a project.
+ * @param {string} projectId
+ * @param {string} actorId
+ */
+export async function unmarkIndividualRoll(projectId, actorId) {
+  const projects = _loadProjects();
+  const project = projects.find(p => p.id === projectId);
+  if (!project || !Array.isArray(project.individuallyRolledIds)) return;
+  const idx = project.individuallyRolledIds.indexOf(actorId);
+  if (idx === -1) return;
+  project.individuallyRolledIds.splice(idx, 1);
+  await _saveProjects(projects);
 }
 
 /**

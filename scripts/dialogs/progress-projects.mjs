@@ -5,7 +5,7 @@
  */
 
 import { MODULE_ID, FOLLOWER_TYPE, CHARACTERISTIC_ROLL_KEYS } from "../config.mjs";
-import { getProjects, addProjectPoints, updateProject } from "../hideout/project-manager.mjs";
+import { getProjects, updateProject, clearAllIndividualRolls } from "../hideout/project-manager.mjs";
 import { HideoutApp } from "../hideout/hideout-app.mjs";
 import {
   evaluateProjectEventTrigger,
@@ -13,6 +13,7 @@ import {
   postEventChatMessage,
   postProceedButtonMessage,
 } from "../hideout/project-events.mjs";
+import { executeRollPipeline } from "../hideout/project-roll-helpers.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -55,10 +56,12 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
 
     const groups = [];
     let totalRows = 0;
+    let pendingRows = 0;
 
     for (const project of projects) {
       const groupRows = [];
       let rowIndex = 0;
+      const rolledIds = new Set(project.individuallyRolledIds ?? []);
       for (const actorId of project.contributorIds) {
         const actor = game.actors.get(actorId);
         if (!actor) continue;
@@ -81,6 +84,8 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
           value: bestChar.value,
         }] : [];
 
+        const alreadyRolled = rolledIds.has(actorId);
+
         groupRows.push({
           actorId,
           actorName: actor.name,
@@ -90,8 +95,10 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
           edges: opts.edges,
           banes: opts.banes,
           isEvenRow: rowIndex % 2 === 0,
+          alreadyRolled,
         });
         rowIndex++;
+        if (!alreadyRolled) pendingRows++;
       }
 
       if (groupRows.length === 0) continue;
@@ -106,9 +113,16 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       totalRows += groupRows.length;
     }
 
+    const allAlreadyRolled = totalRows > 0 && pendingRows === 0;
+
     return {
       groups,
       hasRows: totalRows > 0,
+      allAlreadyRolled,
+      rollButtonLabel: allAlreadyRolled
+        ? game.i18n.localize("DSHIDEOUT.ProgressProjects.ResetProjectRolls")
+        : game.i18n.localize("DSHIDEOUT.ProgressProjects.RollAll"),
+      rollButtonIcon: allAlreadyRolled ? "fa-rotate-left" : "fa-dice-d20",
     };
   }
 
@@ -163,6 +177,9 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
     const rowConfigs = [];
 
     for (const row of rows) {
+      // Skip rows that already rolled individually — they are excluded
+      // from the collective batch but still drive event resolution.
+      if (row.dataset.alreadyRolled === "1") continue;
       const actorId = row.dataset.actorId;
       const projectId = row.dataset.projectId;
       if (!actorId || !projectId) continue;
@@ -185,12 +202,23 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       rowConfigs.push({ actor, project, opts, charKey: bestCharKey, formula, rollData });
     }
 
-    if (!rowConfigs.length) return;
+    // No remaining rolls = "Reset Project Rolls" mode: still resolve events,
+    // then clear the individual-roll state.
+    const rollsRemaining = rowConfigs.length > 0;
+
+    // Build the set of projects whose contributors are present in this run
+    // so we can resolve their events. When all rolls were done individually
+    // (rollsRemaining=false), use every project that has individual rolls.
+    let projectsInRun;
+    if (rollsRemaining) {
+      projectsInRun = [...new Map(rowConfigs.map(c => [c.project.id, c.project])).values()];
+    } else {
+      projectsInRun = projects.filter(p => (p.individuallyRolledIds ?? []).length > 0);
+    }
+
+    if (!rollsRemaining && !projectsInRun.length) return;
 
     // ── Project events (pre-roll resolution) ──────────────────────────────
-    // Group projects involved in this run, evaluate per-project triggers,
-    // roll their event tables, and split into before/after the project rolls.
-    const projectsInRun = [...new Map(rowConfigs.map(c => [c.project.id, c.project])).values()];
     const eventQueue = []; // { project, event, timing, trigger }
     for (const project of projectsInRun) {
       const trigger = await evaluateProjectEventTrigger(project);
@@ -228,7 +256,7 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
     await this.close();
 
     // ── Phase 2: gate behind Proceed button if any "before" ───────────────
-    if (beforeEvents.length) {
+    if (beforeEvents.length && rollsRemaining) {
       const runId = foundry.utils.randomID();
       const proceed = new Promise((resolve) => {
         ProgressProjectsDialog._pendingProceeds.set(runId, resolve);
@@ -238,7 +266,9 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
     }
 
     // ── Phase 3: do the project rolls + breakthrough chain ────────────────
-    await ProgressProjectsDialog.#executeRollPipeline(rowConfigs);
+    if (rollsRemaining) {
+      await executeRollPipeline(rowConfigs);
+    }
 
     // ── Phase 4: mark milestones as triggered ─────────────────────────────
     for (const ev of eventQueue) {
@@ -263,38 +293,11 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       });
     }
 
+    // ── Phase 6: clear individual-roll state for every project ────────────
+    await clearAllIndividualRolls();
+
     // No explicit render needed — _saveProjects fires updateSetting which triggers
     // the debounced dshideout:refresh hook, keeping all clients in sync cleanly.
-  }
-
-  /**
-   * Execute the main roll batch + breakthrough chain. Extracted so it can
-   * be deferred behind the "Proceed with Project Rolls" button.
-   * @param {object[]} rowConfigs
-   */
-  static async #executeRollPipeline(rowConfigs) {
-    const mainBatch = await ProgressProjectsDialog.#rollBatch(rowConfigs);
-    if (game.dice3d) {
-      await Promise.all(mainBatch.map(r => game.dice3d.showForRoll(r.roll, game.user, true)));
-    }
-    await ProgressProjectsDialog.#applyAndPost(mainBatch, 0);
-
-    // Breakthrough chain: each natural 19-20 grants another roll, posted as
-    // a separate chat message and points update.
-    let prevBatch = mainBatch;
-    for (let depth = 1; depth <= 10; depth++) {
-      const breakthroughConfigs = prevBatch
-        .filter(r => r.isNaturalBreakthrough)
-        .map(r => r.cfg);
-      if (!breakthroughConfigs.length) break;
-
-      const btBatch = await ProgressProjectsDialog.#rollBatch(breakthroughConfigs);
-      if (game.dice3d) {
-        await Promise.all(btBatch.map(r => game.dice3d.showForRoll(r.roll, game.user, true)));
-      }
-      await ProgressProjectsDialog.#applyAndPost(btBatch, depth);
-      prevBatch = btBatch;
-    }
   }
 
   /**
@@ -313,118 +316,4 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
 
   /** @type {Map<string, () => void>} */
   static _pendingProceeds = new Map();
-
-  /**
-   * Roll a batch of project rolls and return enriched result objects.
-   * Each result carries its original `cfg` so it can seed a breakthrough chain.
-   * @param {object[]} configs
-   * @returns {Promise<object[]>}
-   */
-  static async #rollBatch(configs) {
-    const ProjectRoll = ds.rolls.ProjectRoll;
-    return (await Promise.all(configs.map(async cfg => {
-      try {
-        const roll = new ProjectRoll(cfg.formula, cfg.rollData, {
-          edges: cfg.opts.edges,
-          banes: cfg.opts.banes,
-        });
-        await roll.evaluate();
-        // Natural breakthrough: sum of the active (kept) dice before the characteristic bonus.
-        // With edges/banes, extra dice are rolled and the lowest/highest are dropped;
-        // only `active: true` results count toward the natural total.
-        const naturalTotal = (roll.dice[0]?.results ?? [])
-          .filter(r => r.active)
-          .reduce((sum, r) => sum + r.result, 0);
-        return {
-          cfg,
-          actor: cfg.actor,
-          project: cfg.project,
-          roll,
-          product: roll.product ?? Math.max(1, roll.total),
-          naturalTotal,
-          isNaturalBreakthrough: naturalTotal >= 19,
-        };
-      } catch (err) {
-        console.error(`draw-steel-hideout | ProjectRoll failed for ${cfg.actor.name}:`, err);
-        ui.notifications.error(`Roll failed for ${cfg.actor.name}`);
-        return null;
-      }
-    }))).filter(Boolean);
-  }
-
-  /**
-   * Apply project points from a result batch and post a chat message.
-   * @param {object[]} results   Rolled results from #rollBatch
-   * @param {number}   chainDepth  0 = main roll, 1+ = Nth breakthrough in chain
-   */
-  static async #applyAndPost(results, chainDepth) {
-    const projectPoints = new Map();
-    for (const r of results) {
-      projectPoints.set(r.project.id, (projectPoints.get(r.project.id) ?? 0) + r.product);
-    }
-    const updatedProjects = {};
-    for (const [projectId, points] of projectPoints) {
-      updatedProjects[projectId] = await addProjectPoints(projectId, points);
-    }
-    await ProgressProjectsDialog.#postChatMessage(results, updatedProjects, chainDepth);
-  }
-
-  static async #postChatMessage(results, updatedProjects, chainDepth) {
-    const isBreakthrough = chainDepth > 0;
-    const header = isBreakthrough
-      ? `${game.i18n.localize("DSHIDEOUT.ProgressProjects.BreakthroughHeader")}${chainDepth > 1 ? ` (&times;${chainDepth})` : ""}`
-      : game.i18n.localize("DSHIDEOUT.ProgressProjects.ChatHeader");
-
-    let content = `<div class="dshideout-progress-chat">`;
-    content += `<h3>${header}</h3>`;
-    content += `<table class="dshideout-progress-table"><thead><tr>
-      <th>${game.i18n.localize("DSHIDEOUT.ProgressProjects.ChatActor")}</th>
-      <th>${game.i18n.localize("DSHIDEOUT.ProgressProjects.ChatProject")}</th>
-      <th>${game.i18n.localize("DSHIDEOUT.ProgressProjects.ChatRoll")}</th>
-      <th>${game.i18n.localize("DSHIDEOUT.ProgressProjects.ChatProduct")}</th>
-    </tr></thead><tbody>`;
-
-    for (const r of results) {
-      // Dice breakdown: show natural sum + modifier separately (e.g. "13-1" or "16+6")
-      const diceSum = (r.roll.dice[0]?.results ?? [])
-        .filter(res => res.active)
-        .reduce((sum, res) => sum + res.result, 0);
-      const modifier = r.roll.total - diceSum;
-      const rollDisplay = modifier > 0
-        ? `${diceSum}+${modifier}`
-        : modifier < 0
-          ? `${diceSum}${modifier}`
-          : `${diceSum}`;
-
-      const breakthroughBadge = r.isNaturalBreakthrough
-        ? ` <span class="dshideout-breakthrough-badge" title="${game.i18n.localize("DSHIDEOUT.ProgressProjects.BreakthroughTooltip")}">&#x26a1;</span>`
-        : "";
-      content += `<tr>
-        <td><img src="${r.actor.img}" class="dshideout-chat-portrait" />${foundry.utils.escapeHTML(r.actor.name)}</td>
-        <td>${foundry.utils.escapeHTML(r.project.name)}</td>
-        <td>${rollDisplay}${breakthroughBadge}</td>
-        <td><strong>+${r.product}</strong></td>
-      </tr>`;
-    }
-
-    content += `</tbody></table><div class="dshideout-project-summary">`;
-    for (const [, result] of Object.entries(updatedProjects)) {
-      const updated = result?.project;
-      if (!updated) continue;
-      const pct = updated.goal ? Math.min(100, Math.round((updated.points / updated.goal) * 100)) : 0;
-      const progressText = updated.goal ? `${updated.points}/${updated.goal}` : `${updated.points}`;
-      const completedText = updated.completed
-        ? ` &#x2713; ${game.i18n.localize("DSHIDEOUT.ProgressProjects.Completed")}`
-        : "";
-      content += `<p><strong>${foundry.utils.escapeHTML(updated.name)}</strong>: ${progressText}${updated.goal ? ` (${pct}%)` : ""}${completedText}</p>`;
-    }
-    content += `</div></div>`;
-
-    const ChatMessage = getDocumentClass("ChatMessage");
-    await ChatMessage.create({
-      content,
-      speaker: ChatMessage.getSpeaker(),
-      flags: { core: { canPopout: true } },
-    });
-  }
 }

@@ -157,11 +157,30 @@
                 <div class="dshideout-contributors" data-project-drop-zone="{{this.id}}">
                   {{#if this.contributors.length}}
                     {{#each this.contributors}}
-                      <span class="dshideout-contributor-pill"
+                      <span class="dshideout-contributor-pill{{#if this.hasRolledIndividually}} dshideout-pill-rolled{{/if}}"
                             data-actor-id="{{this.id}}"
                             title="{{this.name}}"
                             draggable="true"
                             {{#if this.isItemFollower}}data-drag-item-contributor{{else}}data-drag-contributor{{/if}}>
+                        {{#if ../individualRollsEnabled}}
+                          {{#if this.hasRolledIndividually}}
+                            <button type="button" class="dshideout-individual-rolled"
+                                    data-action="clearIndividualRoll"
+                                    data-actor-id="{{this.id}}"
+                                    data-project-id="{{../id}}"
+                                    title="{{localize 'DSHIDEOUT.IndividualRoll.ClearRoll'}}">
+                              <i class="fas fa-check"></i>
+                            </button>
+                          {{else if this.canRollIndividually}}
+                            <button type="button" class="dshideout-individual-roll-btn"
+                                    data-action="individualProjectRoll"
+                                    data-actor-id="{{this.id}}"
+                                    data-project-id="{{../id}}"
+                                    title="{{localize 'DSHIDEOUT.IndividualRoll.Tooltip'}}">
+                              <i class="fas fa-dice-d20"></i>
+                            </button>
+                          {{/if}}
+                        {{/if}}
                         <button type="button" class="dshideout-remove-contributor"
                                 data-action="removeContributor" data-actor-id="{{this.id}}"
                                 title="{{localize 'DSHIDEOUT.Projects.RemoveContributor'}}">

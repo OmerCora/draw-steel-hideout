@@ -20,6 +20,7 @@ export const SETTINGS = {
   ITEM_FOLLOWERS: "roster-item-followers",
   ARCHIVES: "archives",
   MINIMUM_ROLE: "minimumRole",
+  ALLOW_INDIVIDUAL_ROLLS: "allowIndividualRolls",
 };
 
 /** Default compendium pack IDs that contain project-type items. */

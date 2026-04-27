@@ -1,0 +1,79 @@
+{{!-- Individual Project Roll Dialog --}}
+<div class="dshideout-progress-projects">
+
+  {{#if hasError}}
+    <div class="dshideout-empty-state">
+      <i class="fas fa-triangle-exclamation dshideout-empty-icon"></i>
+      <p>{{localize "DSHIDEOUT.IndividualRoll.NotFound"}}</p>
+    </div>
+  {{else}}
+    <p class="dshideout-dialog-hint">{{localize "DSHIDEOUT.IndividualRoll.Hint"}}</p>
+
+    <div class="dshideout-progress-group-section">
+      {{!-- Project header bar --}}
+      <div class="dshideout-progress-group-title">
+        <span class="dshideout-progress-group-name">{{project.name}}</span>
+        <div class="dshideout-mini-progress-bar dshideout-progress-group-bar">
+          <div class="dshideout-mini-bar-fill" style="width:{{project.progressPct}}%"></div>
+        </div>
+        <span class="dshideout-progress-text">{{project.progress}}</span>
+      </div>
+
+      <table class="dshideout-progress-table">
+        <thead>
+          <tr>
+            <th>{{localize "DSHIDEOUT.ProgressProjects.Actor"}}</th>
+            <th>{{localize "DSHIDEOUT.ProgressProjects.Characteristic"}}</th>
+            <th>{{localize "DSHIDEOUT.ProgressProjects.Edges"}}</th>
+            <th>{{localize "DSHIDEOUT.ProgressProjects.Banes"}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="dshideout-progress-row dshideout-row-even"
+              data-contributor-row
+              data-actor-id="{{actor.id}}"
+              data-project-id="{{project.id}}">
+
+            <td class="dshideout-progress-actor">
+              <img class="dshideout-contributor-portrait dshideout-progress-portrait" src="{{actor.img}}" alt="{{actor.name}}" />
+              <span>{{actor.name}}</span>
+            </td>
+
+            <td class="dshideout-progress-chars">
+              {{#each charList}}
+                <span class="dshideout-char-pill" title="{{this.label}}">
+                  {{this.label}}: {{this.value}}
+                </span>
+              {{/each}}
+            </td>
+
+            <td class="dshideout-progress-select-cell">
+              <select data-roll-option="edges" data-actor-id="{{actor.id}}" class="dshideout-select dshideout-small-select">
+                <option value="0" {{#dshideout-eq edges 0}}selected{{/dshideout-eq}}>0</option>
+                <option value="1" {{#dshideout-eq edges 1}}selected{{/dshideout-eq}}>1</option>
+                <option value="2" {{#dshideout-eq edges 2}}selected{{/dshideout-eq}}>2</option>
+              </select>
+            </td>
+
+            <td class="dshideout-progress-select-cell">
+              <select data-roll-option="banes" data-actor-id="{{actor.id}}" class="dshideout-select dshideout-small-select">
+                <option value="0" {{#dshideout-eq banes 0}}selected{{/dshideout-eq}}>0</option>
+                <option value="1" {{#dshideout-eq banes 1}}selected{{/dshideout-eq}}>1</option>
+                <option value="2" {{#dshideout-eq banes 2}}selected{{/dshideout-eq}}>2</option>
+              </select>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="dshideout-dialog-footer">
+      <button type="button" class="dshideout-btn dshideout-btn-primary dshideout-btn-large"
+              data-action="roll">
+        <i class="fas fa-dice-d20"></i> {{localize "DSHIDEOUT.IndividualRoll.Roll"}}
+      </button>
+    </div>
+  {{/if}}
+
+</div>

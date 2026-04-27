@@ -190,6 +190,18 @@
   "DSHIDEOUT.Events.D6CheckTriggered": "Event check for <strong>{project}</strong>: rolled a <strong>{result}</strong> — event triggered!",
   "DSHIDEOUT.Events.D6CheckMissed": "Event check for <strong>{project}</strong>: rolled a <strong>{result}</strong> — no event.",
   "DSHIDEOUT.ProgressProjects.RollInProgress": "Roll In Progress…",
+  "DSHIDEOUT.ProgressProjects.AlreadyRolled": "Already Rolled",
+  "DSHIDEOUT.ProgressProjects.ResetProjectRolls": "Reset Project Rolls",
+
+  "DSHIDEOUT.IndividualRoll.Title": "Individual Project Roll",
+  "DSHIDEOUT.IndividualRoll.Hint": "Roll your project progress individually for this project.",
+  "DSHIDEOUT.IndividualRoll.Roll": "Roll",
+  "DSHIDEOUT.IndividualRoll.ChatHeader": "Individual Project Roll",
+  "DSHIDEOUT.IndividualRoll.AlreadyRolled": "Already rolled individually for this project",
+  "DSHIDEOUT.IndividualRoll.ClearRoll": "Already rolled — click to undo",
+  "DSHIDEOUT.IndividualRoll.Tooltip": "Roll project progress individually",
+  "DSHIDEOUT.IndividualRoll.NotFound": "Project or contributor no longer exists.",
+  "DSHIDEOUT.IndividualRoll.RollFailed": "Individual project roll failed.",
 
   "DSHIDEOUT.Transfer.PromptTitle": "Transfer {item}",
   "DSHIDEOUT.Transfer.HowMany": "How many {item} do you want to transfer to {target}? (max: {max})",
@@ -225,6 +237,8 @@
 
   "DSHIDEOUT.Settings.MinimumRole.Name": "Minimum Role for Player Operations",
   "DSHIDEOUT.Settings.MinimumRole.Hint": "The minimum user role required to assign contributors to projects and roll project progress. Set to Gamemaster to restrict all writes to the GM only.",
+  "DSHIDEOUT.Settings.AllowIndividualRolls.Name": "Allow Individual Project Rolls",
+  "DSHIDEOUT.Settings.AllowIndividualRolls.Hint": "When enabled, contributors can roll their project progress individually (via a button on their contributor pill) instead of waiting for the GM's collective Roll All. Already-rolled contributors are skipped on the next Roll All; once everyone has rolled individually, Roll All becomes 'Reset Project Rolls' which only resolves project events and clears the individual-roll state.",
 
   "DSHIDEOUT.Permission.Denied": "You do not have permission to perform this action."
 }

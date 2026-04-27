@@ -66,6 +66,20 @@ Hooks.once("init", () => {
     },
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.ALLOW_INDIVIDUAL_ROLLS, {
+    name: "DSHIDEOUT.Settings.AllowIndividualRolls.Name",
+    hint: "DSHIDEOUT.Settings.AllowIndividualRolls.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: false,
+    onChange: () => {
+      if (HideoutApp._instance?.rendered) {
+        HideoutApp._instance.render({ parts: ["main"] });
+      }
+    },
+  });
+
   // Register Follower data model
   registerFollowerModel();
 
@@ -79,6 +93,7 @@ Hooks.once("init", () => {
     `modules/${MODULE_ID}/templates/dialogs/create-follower.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/create-follower-footer.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/progress-projects.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/individual-project-roll.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/project-settings.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/project-settings-footer.hbs`,
     // Follower actor sheet templates

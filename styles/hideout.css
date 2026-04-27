@@ -834,6 +834,61 @@
   color: var(--color-negative, #f44336);
 }
 
+/* ─── Individual project roll button (top-left of pill) ─────── */
+.draw-steel-hideout .dshideout-individual-roll-btn {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.65rem;
+  color: inherit;
+  opacity: 0.55;
+  transition: opacity 0.1s;
+  border-radius: 2px;
+}
+
+.draw-steel-hideout .dshideout-individual-roll-btn:hover {
+  opacity: 1;
+}
+
+.draw-steel-hideout .dshideout-individual-rolled {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--color-positive, #4caf50);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.1s, color 0.1s;
+  border-radius: 2px;
+}
+
+.draw-steel-hideout .dshideout-individual-rolled:hover {
+  opacity: 1;
+  color: var(--color-negative, #f44336);
+}
+
+.draw-steel-hideout .dshideout-contributor-pill.dshideout-pill-rolled {
+  border-color: color-mix(in srgb, var(--color-positive, #4caf50) 55%, transparent);
+}
+
 .draw-steel-hideout .dshideout-contributors-hint {
   font-size: 0.72rem;
   opacity: 0.5;
@@ -2021,6 +2076,22 @@
 /* Alternating data rows */
 .draw-steel-hideout .dshideout-progress-row.dshideout-row-even td {
   background: rgba(128, 128, 128, 0.05);
+}
+
+/* Already-rolled row (Individual Roll already done) */
+.draw-steel-hideout .dshideout-progress-row.dshideout-row-already-rolled td {
+  opacity: 0.65;
+}
+
+.draw-steel-hideout .dshideout-progress-already-rolled {
+  text-align: right;
+  font-style: italic;
+  color: var(--color-positive, #4caf50);
+  padding-right: 8px;
+}
+
+.draw-steel-hideout .dshideout-progress-already-rolled i {
+  margin-right: 4px;
 }
 
 .draw-steel-hideout .dshideout-progress-group-title {

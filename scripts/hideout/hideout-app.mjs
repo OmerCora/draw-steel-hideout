@@ -6,7 +6,7 @@
 import { MODULE_ID, FOLLOWER_TYPE, HIDEOUT_FOLDER, SETTINGS } from "../config.mjs";
 import {
   getProjects, addProject, removeProject, updateProject, assignContributor,
-  removeContributor, getContributingProject, markYieldObtained,
+  removeContributor, getContributingProject, markYieldObtained, unmarkIndividualRoll,
 } from "./project-manager.mjs";
 import {
   getStash, addStashItem, removeStashItem, changeStashQuantity,
@@ -82,6 +82,8 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       openProjectBrowser: HideoutApp.#onOpenProjectBrowser,
       openTreasureBrowser: HideoutApp.#onOpenTreasureBrowser,
       progressProjects: HideoutApp.#onProgressProjects,
+      individualProjectRoll: HideoutApp.#onIndividualProjectRoll,
+      clearIndividualRoll: HideoutApp.#onClearIndividualRoll,
       // Roster
       removeFromRoster: HideoutApp.#onRemoveFromRoster,
       // Projects
@@ -406,6 +408,9 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   async #enrichProjects(projects) {
     const allActors = this.#buildRosterHeroes().concat(this.#buildRosterFollowers());
     const actorMap = new Map(allActors.map(a => [a.id, a]));
+    const individualRollsEnabled = game.settings.get(MODULE_ID, SETTINGS.ALLOW_INDIVIDUAL_ROLLS);
+    const isGM = game.user.isGM;
+    const myCharacterId = game.user.character?.id ?? null;
 
     return Promise.all(projects.map(async p => {
       const progressPct = p.goal ? Math.min(100, Math.round((p.points / p.goal) * 100)) : 100;
@@ -421,6 +426,21 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       const contributors = (p.contributorIds ?? [])
         .map(id => actorMap.get(id))
         .filter(Boolean);
+
+      // Decorate each contributor with individual-roll flags
+      const individuallyRolledIds = p.individuallyRolledIds ?? [];
+      const decoratedContributors = contributors.map(c => {
+        const hasRolledIndividually = individuallyRolledIds.includes(c.id);
+        let canRollIndividually = false;
+        if (individualRollsEnabled) {
+          if (isGM) canRollIndividually = true;
+          else if (c.isItemFollower) canRollIndividually = c.isGMOrOwner ?? false; // item followers: owner only
+          else if (c.isOwner) canRollIndividually = true; // hero owners
+          else if (c.mentorId && myCharacterId && c.mentorId === myCharacterId) canRollIndividually = true; // mentor of follower
+          else if (c.mentorId === null) canRollIndividually = true; // unassigned actor follower – any player
+        }
+        return { ...c, hasRolledIndividually, canRollIndividually };
+      });
 
       const projectTypeLabel = ds.CONFIG.projects.types[p.type]?.label ?? p.type;
       const charLabels = (p.rollCharacteristic ?? []).map(c => {
@@ -443,7 +463,8 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
         displayName: p.additionalDetail ? `${p.name} (${p.additionalDetail})` : p.name,
         projectTypeLabel,
         charLabels,
-        contributors,
+        contributors: decoratedContributors,
+        individualRollsEnabled,
         description,
         isExpanded,
         yieldText: p.yieldDisplay || p.yieldAmount || "",
@@ -1514,6 +1535,24 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     const dialog = new ProgressProjectsDialog({ hideoutApp: this });
     await dialog.render({ force: true });
+  }
+
+  static async #onIndividualProjectRoll(event, target) {
+    event?.stopPropagation?.();
+    const actorId = target.dataset.actorId;
+    const projectId = target.dataset.projectId;
+    if (!actorId || !projectId) return;
+    const { IndividualProjectRollDialog } = await import("../dialogs/individual-project-roll.mjs");
+    const dialog = new IndividualProjectRollDialog({ actorId, projectId, hideoutApp: this });
+    await dialog.render({ force: true });
+  }
+
+  static async #onClearIndividualRoll(event, target) {
+    event?.stopPropagation?.();
+    const actorId = target.dataset.actorId;
+    const projectId = target.dataset.projectId;
+    if (!actorId || !projectId) return;
+    await unmarkIndividualRoll(projectId, actorId);
   }
 
   static async #onRemoveFromRoster(event, target) {

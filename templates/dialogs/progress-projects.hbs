@@ -27,10 +27,11 @@
           </thead>
           <tbody>
             {{#each this.rows}}
-              <tr class="dshideout-progress-row {{#if this.isEvenRow}}dshideout-row-even{{/if}}"
+              <tr class="dshideout-progress-row {{#if this.isEvenRow}}dshideout-row-even{{/if}}{{#if this.alreadyRolled}} dshideout-row-already-rolled{{/if}}"
                   data-contributor-row
                   data-actor-id="{{this.actorId}}"
-                  data-project-id="{{this.projectId}}">
+                  data-project-id="{{this.projectId}}"
+                  {{#if this.alreadyRolled}}data-already-rolled="1"{{/if}}>
 
                 {{!-- Actor --}}
                 <td class="dshideout-progress-actor">
@@ -38,32 +39,40 @@
                   <span>{{this.actorName}}</span>
                 </td>
 
-                {{!-- Characteristics --}}
-                <td class="dshideout-progress-chars">
-                  {{#each this.charList}}
-                    <span class="dshideout-char-pill" title="{{this.label}}">
-                      {{this.label}}: {{this.value}}
-                    </span>
-                  {{/each}}
-                </td>
+                {{#if this.alreadyRolled}}
+                  {{!-- Already-rolled row: spans the remaining 3 columns --}}
+                  <td class="dshideout-progress-already-rolled" colspan="3">
+                    <i class="fas fa-check"></i>
+                    {{localize "DSHIDEOUT.ProgressProjects.AlreadyRolled"}}
+                  </td>
+                {{else}}
+                  {{!-- Characteristics --}}
+                  <td class="dshideout-progress-chars">
+                    {{#each this.charList}}
+                      <span class="dshideout-char-pill" title="{{this.label}}">
+                        {{this.label}}: {{this.value}}
+                      </span>
+                    {{/each}}
+                  </td>
 
-                {{!-- Edges --}}
-                <td class="dshideout-progress-select-cell">
-                  <select data-roll-option="edges" data-actor-id="{{this.actorId}}" class="dshideout-select dshideout-small-select">
-                    <option value="0" {{#dshideout-eq this.edges 0}}selected{{/dshideout-eq}}>0</option>
-                    <option value="1" {{#dshideout-eq this.edges 1}}selected{{/dshideout-eq}}>1</option>
-                    <option value="2" {{#dshideout-eq this.edges 2}}selected{{/dshideout-eq}}>2</option>
-                  </select>
-                </td>
+                  {{!-- Edges --}}
+                  <td class="dshideout-progress-select-cell">
+                    <select data-roll-option="edges" data-actor-id="{{this.actorId}}" class="dshideout-select dshideout-small-select">
+                      <option value="0" {{#dshideout-eq this.edges 0}}selected{{/dshideout-eq}}>0</option>
+                      <option value="1" {{#dshideout-eq this.edges 1}}selected{{/dshideout-eq}}>1</option>
+                      <option value="2" {{#dshideout-eq this.edges 2}}selected{{/dshideout-eq}}>2</option>
+                    </select>
+                  </td>
 
-                {{!-- Banes --}}
-                <td class="dshideout-progress-select-cell">
-                  <select data-roll-option="banes" data-actor-id="{{this.actorId}}" class="dshideout-select dshideout-small-select">
-                    <option value="0" {{#dshideout-eq this.banes 0}}selected{{/dshideout-eq}}>0</option>
-                    <option value="1" {{#dshideout-eq this.banes 1}}selected{{/dshideout-eq}}>1</option>
-                    <option value="2" {{#dshideout-eq this.banes 2}}selected{{/dshideout-eq}}>2</option>
-                  </select>
-                </td>
+                  {{!-- Banes --}}
+                  <td class="dshideout-progress-select-cell">
+                    <select data-roll-option="banes" data-actor-id="{{this.actorId}}" class="dshideout-select dshideout-small-select">
+                      <option value="0" {{#dshideout-eq this.banes 0}}selected{{/dshideout-eq}}>0</option>
+                      <option value="1" {{#dshideout-eq this.banes 1}}selected{{/dshideout-eq}}>1</option>
+                      <option value="2" {{#dshideout-eq this.banes 2}}selected{{/dshideout-eq}}>2</option>
+                    </select>
+                  </td>
+                {{/if}}
 
               </tr>
             {{/each}}
@@ -75,7 +84,7 @@
     <div class="dshideout-dialog-footer">
       <button type="button" class="dshideout-btn dshideout-btn-primary dshideout-btn-large"
               data-action="rollAll">
-        <i class="fas fa-dice-d20"></i> {{localize "DSHIDEOUT.ProgressProjects.RollAll"}}
+        <i class="fas {{rollButtonIcon}}"></i> {{rollButtonLabel}}
       </button>
     </div>
 
