@@ -10,6 +10,7 @@ import { HideoutApp } from "./hideout/hideout-app.mjs";
 import { getStash, removeStashItem, changeStashQuantity } from "./hideout/stash-manager.mjs";
 import { registerSocket, HIDEOUT_SETTING_KEYS } from "./socket.mjs";
 import { ProgressProjectsDialog } from "./dialogs/progress-projects.mjs";
+import { clearAllIndividualRolls } from "./hideout/project-manager.mjs";
 /* -------------------------------------------------- */
 /*  Init                                              */
 /* -------------------------------------------------- */
@@ -73,7 +74,8 @@ Hooks.once("init", () => {
     config: true,
     type: Boolean,
     default: false,
-    onChange: () => {
+    onChange: async (value) => {
+      if (!value) await clearAllIndividualRolls();
       if (HideoutApp._instance?.rendered) {
         HideoutApp._instance.render({ parts: ["main"] });
       }
