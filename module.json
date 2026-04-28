@@ -2,7 +2,7 @@
   "id": "draw-steel-hideout",
   "title": "Draw Steel - Hideout",
   "description": "Downtime management module for Draw Steel: tracks respite projects, manages followers (Artisan/Sage), assigns members to projects, and maintains a party stash of items.",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "compatibility": {
     "minimum": "13",
     "verified": "14.360"
