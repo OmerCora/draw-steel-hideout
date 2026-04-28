@@ -34,6 +34,7 @@ export async function addArchiveEntry(entry) {
     description: entry.description ?? "",
     category: entry.category ?? "",
     echelon: entry.echelon ?? 0,
+    keywords: entry.keywords ?? "",
     hasCraftingData: entry.hasCraftingData ?? false,
     projectData: entry.projectData ?? null,
     craftCount: entry.craftCount ?? 0,

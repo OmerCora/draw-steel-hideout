@@ -205,6 +205,11 @@
                  data-action="toggleDescription"
                  data-description-id="{{this.id}}">
               <div class="dshideout-collapsible-inner dshideout-project-description">
+                {{#if this.keywords.length}}
+                  <div class="dshideout-item-keywords-row">
+                    {{#each this.keywords}}<span class="dshideout-char-pill">{{this}}</span>{{/each}}
+                  </div>
+                {{/if}}
                 {{#if this.projectSource}}
                   <p class="dshideout-project-source-field">
                     <strong>{{localize "DSHIDEOUT.Projects.ProjectSource"}}:</strong> {{this.projectSource}}
@@ -323,6 +328,11 @@
                        data-description-id="{{this.id}}">
                     <div class="dshideout-collapsible-inner">
                       <div class="dshideout-stash-expanded">
+                        {{#if this.keywords.length}}
+                          <div class="dshideout-item-keywords-row">
+                            {{#each this.keywords}}<span class="dshideout-char-pill">{{this}}</span>{{/each}}
+                          </div>
+                        {{/if}}
                         {{#if this.description}}{{{this.description}}}{{/if}}
                         {{#if this.projectData}}
                           <div class="dshideout-stash-project-meta">
@@ -405,6 +415,11 @@
                        data-description-id="{{this.id}}">
                     <div class="dshideout-collapsible-inner">
                       <div class="dshideout-stash-expanded">
+                        {{#if this.keywords.length}}
+                          <div class="dshideout-item-keywords-row">
+                            {{#each this.keywords}}<span class="dshideout-char-pill">{{this}}</span>{{/each}}
+                          </div>
+                        {{/if}}
                         {{#if this.description}}{{{this.description}}}{{/if}}
                         {{#if this.projectData}}
                           <div class="dshideout-stash-project-meta">

@@ -75,6 +75,7 @@ export async function addStashItem(itemData, quantity = 1) {
     description: itemData.description ?? "",
     category: itemData.category ?? "",
     echelon: itemData.echelon ?? 0,
+    keywords: itemData.keywords ?? "",
     quantity,
   };
 

@@ -25,6 +25,24 @@ import { ProjectSettingsDialog } from "../dialogs/project-settings.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
+/**
+ * Resolve a treasure item's keywords into a sorted array of localized label strings.
+ * @param {Set|Array|undefined} keywords
+ * @param {string} category
+ * @param {string} kind
+ * @returns {string[]}
+ */
+function _resolveTreasureKeywordLabels(keywords, category, kind) {
+  const labels = Array.from(keywords ?? []).map(kw =>
+    ds.CONFIG.equipment.keywords[kw]?.label
+    ?? ds.CONFIG.equipment.categories[category]?.keywords?.find(k => k.value === kw)?.label
+    ?? ds.CONFIG.equipment[kind]?.[kw]?.label
+    ?? kw
+  );
+  labels.sort((a, b) => a.localeCompare(b));
+  return labels;
+}
+
 export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /* -------------------------------------------------- */
@@ -1202,6 +1220,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       rollCharacteristic: Array.from(sys.rollCharacteristic ?? []),
       projectSource: sys.projectSource ?? "",
       prerequisites: sys.prerequisites ?? "",
+      keywords: [],
       yieldItemUuid: sys.yield?.item ?? null,
       yieldAmount: sys.yield?.amount ?? "1",
       yieldDisplay: sys.yield?.display ?? "",
@@ -1237,6 +1256,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       rollCharacteristic: Array.from(sys.project.rollCharacteristic ?? []),
       projectSource: sys.project.source ?? "",
       prerequisites: sys.project.prerequisites ?? "",
+      keywords: _resolveTreasureKeywordLabels(sys.keywords, sys.category, sys.kind),
       yieldItemUuid: item.uuid,
       yieldAmount: sys.project.yield?.amount ?? "1",
       yieldDisplay: sys.project.yield?.display ?? "",
@@ -1295,7 +1315,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!project) return;
 
     const confirmed = await foundry.applications.api.DialogV2.confirm({
-      window: { title: game.i18n.localize("DSHIDEOUT.Projects.DeleteConfirm") },
+      window: { title: game.i18n.localize("DSHIDEOUT.Projects.RemoveTitle") },
       content: `<p>${game.i18n.format("DSHIDEOUT.Projects.DeleteConfirm", { name: project.name })}</p>`,
     });
     if (!confirmed) return;

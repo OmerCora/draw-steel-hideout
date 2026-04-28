@@ -99,7 +99,14 @@
               {{#if this.projectPrerequisites}}
                 <p><strong>{{localize "DSHIDEOUT.Projects.Prerequisites"}}:</strong> {{this.projectPrerequisites}}</p>
               {{/if}}
-              {{{this.description}}}
+              {{#if this.keywords.length}}
+                <div class="dshideout-item-keywords-row">
+                  {{#each this.keywords}}
+                    <span class="dshideout-char-pill">{{this}}</span>
+                  {{/each}}
+                </div>
+              {{/if}}
+              <div class="dshideout-browser-description">{{{this.description}}}</div>
             </div>
           </div>
         </li>

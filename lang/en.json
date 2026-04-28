@@ -31,6 +31,7 @@
   "DSHIDEOUT.Projects.ObtainYield": "Obtain Yield",
   "DSHIDEOUT.Projects.YieldObtained": "Yield Sent to Stash",
   "DSHIDEOUT.Projects.DeleteConfirm": "Remove \"{name}\" from the projects list?",
+  "DSHIDEOUT.Projects.RemoveTitle": "Remove Project",
   "DSHIDEOUT.Projects.RestartProject": "Restart Project",
   "DSHIDEOUT.Projects.RestartConfirmTitle": "Restart Project",
   "DSHIDEOUT.Projects.RestartConfirm": "Reset \"{name}\" back to ongoing with no progress?",

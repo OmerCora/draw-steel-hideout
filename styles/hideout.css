@@ -579,6 +579,14 @@
   flex-shrink: 0;
 }
 
+/* Keyword pills row — used in description panels (treasure browser, stash, archives, projects) */
+.draw-steel-hideout .dshideout-item-keywords-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
 .draw-steel-hideout .dshideout-expand-icon {
   font-size: 0.7rem;
   opacity: 0.5;
@@ -935,8 +943,12 @@
 }
 
 /* Project description collapsible content */
-.draw-steel-hideout .dshideout-collapsible > .dshideout-project-description {
-  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+.draw-steel-hideout .dshideout-collapsible > .dshideout-project-description::before {
+  content: "";
+  display: block;
+  height: 1px;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  margin-bottom: 6px;
 }
 
 .draw-steel-hideout .dshideout-prerequisites {

@@ -26,6 +26,25 @@ const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applicat
 let _treasureCachedIndex = null;
 let _treasureCachedSourceOptions = null;
 
+/**
+ * Resolve a treasure item's keywords into a sorted array of localized label strings.
+ * Mirrors TreasureModel.formattedKeywords for use on raw index entries.
+ * @param {Set|Array|undefined} keywordSet
+ * @param {string} category
+ * @param {string} kind
+ * @returns {string[]}
+ */
+function _getTreasureKeywordLabels(keywordSet, category, kind) {
+  const labels = Array.from(keywordSet ?? []).map(kw =>
+    ds.CONFIG.equipment.keywords[kw]?.label
+    ?? ds.CONFIG.equipment.categories[category]?.keywords?.find(k => k.value === kw)?.label
+    ?? ds.CONFIG.equipment[kind]?.[kw]?.label
+    ?? kw
+  );
+  labels.sort((a, b) => a.localeCompare(b));
+  return labels;
+}
+
 export async function loadTreasureIndex() {
   const entries = [];
 
@@ -52,6 +71,7 @@ export async function loadTreasureIndex() {
           description: entry.system?.description?.value ?? "",
           category: entry.system?.category ?? "",
           echelon: entry.system?.echelon ?? 0,
+          keywords: _getTreasureKeywordLabels(entry.system?.keywords, entry.system?.category, entry.system?.kind),
           source: packId,
           sourceLabel,
           hasCraftingData: !!entry.system?.project?.goal,
@@ -77,6 +97,7 @@ export async function loadTreasureIndex() {
       description: item.system.description?.value ?? "",
       category: item.system.category ?? "",
       echelon: item.system.echelon ?? 0,
+      keywords: _getTreasureKeywordLabels(item.system.keywords, item.system.category, item.system.kind),
       source: "world",
       sourceLabel: game.i18n.localize("DSHIDEOUT.TreasureBrowser.SourceWorld"),
       hasCraftingData: !!item.system.project?.goal,
@@ -301,7 +322,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
     this.render();
   }
 
-  static #onSelectRow(event, target) {
+  static async #onSelectRow(event, target) {
     const uuid = target.dataset.uuid;
     if (!uuid) return;
     const wasSelected = this.#selectedUuid === uuid;
@@ -315,21 +336,23 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
       if (coll) coll.classList.toggle("is-expanded", isNow);
     }
 
-    // Scroll the newly-selected row into view only after any collapsing row
-    // finishes its CSS transition (0.25s). A single rAF fires too early while
-    // the previously-expanded row is still mid-animation, causing the target
-    // position to be calculated incorrectly.
+    // Enrich the description for the newly-expanded row, then scroll into view
     if (this.#selectedUuid) {
       const selectedRow = this.element.querySelector(`.dshideout-browser-row[data-uuid="${this.#selectedUuid}"]`);
+      const descEl = selectedRow?.querySelector(".dshideout-browser-description");
+      const entry = this.#filteredEntries.find(e => e.uuid === this.#selectedUuid);
+      if (descEl && entry?.description) {
+        const enriched = await foundry.applications.ux.TextEditor.implementation
+          .enrichHTML(entry.description, { async: true })
+          .catch(() => entry.description);
+        descEl.innerHTML = enriched;
+      }
       if (selectedRow) {
         const doScroll = () => selectedRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        // Find a collapsible that is NOT expanded but still has visible height
-        // (i.e. currently mid-collapse transition).
         const collapsing = [...this.element.querySelectorAll(".dshideout-collapsible:not(.is-expanded)")]
           .find(el => el.getBoundingClientRect().height > 0);
         if (collapsing) {
           collapsing.addEventListener("transitionend", doScroll, { once: true });
-          // Safety fallback in case transitionend never fires (reduced-motion, etc.)
           setTimeout(doScroll, 300);
         } else {
           requestAnimationFrame(doScroll);
@@ -392,6 +415,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
       description: item.system.description?.value ?? "",
       category: item.system.category ?? "",
       echelon: item.system.echelon ?? 0,
+      keywords: _getTreasureKeywordLabels(item.system.keywords, item.system.category, item.system.kind),
     });
 
     ui.notifications.info(game.i18n.format("DSHIDEOUT.Stash.ItemDropped", { name: item.name }));
@@ -415,6 +439,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
       description: item.system.description?.value ?? "",
       category: item.system.category ?? "",
       echelon: item.system.echelon ?? 0,
+      keywords: _getTreasureKeywordLabels(item.system.keywords, item.system.category, item.system.kind),
       hasCraftingData: !!item.system.project?.goal,
       projectData: item.system.project ?? null,
     });

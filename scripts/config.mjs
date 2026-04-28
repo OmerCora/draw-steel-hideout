@@ -48,6 +48,7 @@ export const TREASURE_INDEX_FIELDS = [
   "system.kind",
   "system.category",
   "system.echelon",
+  "system.keywords",
   "system.description.value",
   "system.project.goal",
   "system.project.source",

@@ -32,6 +32,7 @@ import { saveWorldSetting } from "../socket.mjs";
  * @property {string}   yieldDisplay      Display text for yield.
  * @property {boolean}  yieldObtained     Whether yield was already sent to stash.
  * @property {string}   additionalDetail  Optional user-entered detail appended to display name.
+ * @property {string[]} keywords          Localized keyword labels (e.g. for treasure-as-project).
  * @property {string}   eventsMode        "disabled" | "milestone" | "d6" | "guaranteed". Default "disabled".
  * @property {string|null} eventTableUuid UUID of the RollTable to roll for events (null = use default).
  * @property {boolean}  postEventsPrivate Post event chat messages as Private-to-GM. Default true.
@@ -94,6 +95,7 @@ export async function addProject(itemData) {
     yieldDisplay: itemData.yieldDisplay ?? "",
     yieldObtained: false,
     additionalDetail: itemData.additionalDetail ?? "",
+    keywords: itemData.keywords ?? [],
     eventsMode: itemData.eventsMode ?? "disabled",
     eventTableUuid: itemData.eventTableUuid ?? null,
     postEventsPrivate: itemData.postEventsPrivate ?? true,

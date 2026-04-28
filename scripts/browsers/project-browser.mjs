@@ -299,7 +299,7 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
     this.close();
   }
 
-  static #onSelectRow(event, target) {
+  static async #onSelectRow(event, target) {
     const uuid = target.dataset.uuid;
     if (!uuid) return;
     const wasSelected = this.#selectedUuid === uuid;
@@ -313,9 +313,18 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
       if (coll) coll.classList.toggle("is-expanded", isNow);
     }
 
-    // Defer scroll so the DOM has reflowed after the previous row collapses
+    // Enrich the description for the newly-expanded row
     if (this.#selectedUuid) {
       const selectedRow = this.element.querySelector(`.dshideout-browser-row[data-uuid="${this.#selectedUuid}"]`);
+      const descEl = selectedRow?.querySelector(".dshideout-browser-description");
+      const entry = this.#filteredEntries.find(e => e.uuid === this.#selectedUuid);
+      if (descEl && entry?.description) {
+        const enriched = await foundry.applications.ux.TextEditor.implementation
+          .enrichHTML(entry.description, { async: true })
+          .catch(() => entry.description);
+        descEl.innerHTML = enriched;
+      }
+      // Defer scroll so the DOM has reflowed after the previous row collapses
       if (selectedRow) requestAnimationFrame(() => selectedRow.scrollIntoView({ block: "start", behavior: "smooth" }));
     }
 
