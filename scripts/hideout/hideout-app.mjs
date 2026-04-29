@@ -216,24 +216,27 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   #buildRosterHeroes() {
     const party = game.actors.party;
-    if (!party) return [];
 
-    return [...party.system.members.values()]
-      .filter(m => m.actor?.type === "hero")
-      .map(m => {
-        const actor = m.actor;
-        const contributingProject = getContributingProject(actor.id);
-        return {
-          id: actor.id,
-          name: actor.name,
-          img: actor.img,
-          uuid: actor.uuid,
-          isOwner: actor.isOwner,
-          isGMOrOwner: game.user.isGM || actor.isOwner,
-          contributingProjectId: contributingProject?.id ?? null,
-          contributingProjectName: contributingProject?.name ?? null,
-        };
-      });
+    // Prefer party actor members; fall back to any hero with a player owner
+    const heroActors = party?.system.members.size
+      ? [...party.system.members.values()]
+          .filter(m => m.actor?.type === "hero")
+          .map(m => m.actor)
+      : game.actors.filter(a => a.type === "hero" && a.hasPlayerOwner);
+
+    return heroActors.map(actor => {
+      const contributingProject = getContributingProject(actor.id);
+      return {
+        id: actor.id,
+        name: actor.name,
+        img: actor.img,
+        uuid: actor.uuid,
+        isOwner: actor.isOwner,
+        isGMOrOwner: game.user.isGM || actor.isOwner,
+        contributingProjectId: contributingProject?.id ?? null,
+        contributingProjectName: contributingProject?.name ?? null,
+      };
+    });
   }
 
   #buildRosterFollowers() {
