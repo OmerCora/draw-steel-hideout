@@ -124,7 +124,7 @@ Hooks.once("ready", () => {
   // Must be done in `ready` so DrawSteelRetainerSheet is already in the registry.
   try {
     const FollowerSheet = getFollowerSheetClass();
-    Actors.registerSheet(MODULE_ID, FollowerSheet, {
+    foundry.documents.collections.Actors.registerSheet(MODULE_ID, FollowerSheet, {
       types: [FOLLOWER_TYPE],
       makeDefault: true,
       label: game.i18n.localize("DSHIDEOUT.FollowerSheet.Label"),

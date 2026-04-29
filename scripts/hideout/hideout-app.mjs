@@ -217,12 +217,27 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #buildRosterHeroes() {
     const party = game.actors.party;
 
-    // Prefer party actor members; fall back to any hero with a player owner
-    const heroActors = party?.system.members.size
+    // Collect from all sources, then deduplicate by actor id.
+    // 1) Party actor members
+    const partyHeroes = party
       ? [...party.system.members.values()]
           .filter(m => m.actor?.type === "hero")
           .map(m => m.actor)
-      : game.actors.filter(a => a.type === "hero" && a.hasPlayerOwner);
+      : [];
+
+    // 2) Any hero with a player owner OR assigned as a player's character
+    const assignedIds = new Set(
+      game.users.filter(u => !u.isGM && u.character).map(u => u.character.id)
+    );
+    const fallbackHeroes = game.actors.filter(a =>
+      a.type === "hero" && (a.hasPlayerOwner || assignedIds.has(a.id))
+    );
+
+    const seen = new Set();
+    const heroActors = [];
+    for (const actor of [...partyHeroes, ...fallbackHeroes]) {
+      if (!seen.has(actor.id)) { seen.add(actor.id); heroActors.push(actor); }
+    }
 
     return heroActors.map(actor => {
       const contributingProject = getContributingProject(actor.id);
