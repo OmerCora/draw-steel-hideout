@@ -4,7 +4,8 @@
  * Selecting an item offers two options: Add as Crafting Project / Add to Party Stash.
  */
 
-import { MODULE_ID, DEFAULT_TREASURE_PACK_IDS, TREASURE_INDEX_FIELDS } from "../config.mjs";
+import { MODULE_ID, DEFAULT_TREASURE_PACK_IDS, TREASURE_INDEX_FIELDS, SETTINGS } from "../config.mjs";
+import { hasGMPermission } from "../socket.mjs";
 import { addStashItem } from "../hideout/stash-manager.mjs";
 import { addArchiveEntry } from "../hideout/archives-manager.mjs";
 
@@ -159,6 +160,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
       addSelectedToArchives: TreasureBrowserApp.#onAddSelectedToArchives,
       clearSearch: TreasureBrowserApp.#onClearSearch,
       removeSource: TreasureBrowserApp.#onRemoveSource,
+      resetFilters: TreasureBrowserApp.#onResetFilters,
     },
   };
 
@@ -176,7 +178,26 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
       _treasureCachedSourceOptions = getTreasureSourceOptions(this.#index);
       this.#loaded = true;
 
-      if (this.#sourceFilters.size === 0) {
+      // Restore persisted filters from client setting.
+      const stored = game.settings.get(MODULE_ID, SETTINGS.TREASURE_BROWSER_FILTERS) ?? {};
+      const validSourceValues = new Set((_treasureCachedSourceOptions ?? []).map(s => s.value));
+      let restored = false;
+      if (typeof stored.categoryFilter === "string") {
+        this.#categoryFilter = stored.categoryFilter;
+        restored = true;
+      }
+      if (Number.isFinite(stored.echelonFilter)) {
+        this.#echelonFilter = stored.echelonFilter;
+        restored = true;
+      }
+      if (Array.isArray(stored.sourceFilters)) {
+        for (const v of stored.sourceFilters) {
+          if (validSourceValues.has(v)) this.#sourceFilters.add(v);
+        }
+        restored = true;
+      }
+
+      if (!restored && this.#sourceFilters.size === 0) {
         for (const s of _treasureCachedSourceOptions) {
           if (s.isDefault) this.#sourceFilters.add(s.value);
         }
@@ -252,7 +273,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
       availableSources: (_treasureCachedSourceOptions ?? []).filter(s => !this.#sourceFilters.has(s.value)),
       searchText: this.#searchText,
       isLoading: !this.#loaded,
-      isGM: game.user.isGM,
+      isGM: hasGMPermission(),
       selectedEntry,
       selectedUuid: this.#selectedUuid,
     };
@@ -291,6 +312,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
     if (catSelect) {
       catSelect.addEventListener("change", (e) => {
         this.#categoryFilter = e.target.value;
+        this.#saveFilters();
         this.render();
       });
     }
@@ -299,6 +321,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
     if (echelonSelect) {
       echelonSelect.addEventListener("change", (e) => {
         this.#echelonFilter = parseInt(e.target.value) || 0;
+        this.#saveFilters();
         this.render();
       });
     }
@@ -311,6 +334,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
         if (val) {
           this.#sourceFilters.add(val);
           e.target.value = "";
+          this.#saveFilters();
           this.render();
         }
       });
@@ -319,7 +343,35 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
 
   static #onRemoveSource(event, target) {
     this.#sourceFilters.delete(target.dataset.source);
+    this.#saveFilters();
     this.render();
+  }
+
+  static #onResetFilters(event, target) {
+    this.#categoryFilter = "";
+    this.#echelonFilter = 0;
+    this.#sourceFilters.clear();
+    for (const s of (_treasureCachedSourceOptions ?? [])) {
+      if (s.isDefault) this.#sourceFilters.add(s.value);
+    }
+    if (this.#sourceFilters.size === 0) {
+      for (const s of (_treasureCachedSourceOptions ?? [])) this.#sourceFilters.add(s.value);
+    }
+    this.#saveFilters();
+    this.render();
+  }
+
+  /** Persist current filter state to the client setting (fire-and-forget). */
+  #saveFilters() {
+    try {
+      game.settings.set(MODULE_ID, SETTINGS.TREASURE_BROWSER_FILTERS, {
+        categoryFilter: this.#categoryFilter ?? "",
+        echelonFilter: this.#echelonFilter ?? 0,
+        sourceFilters: Array.from(this.#sourceFilters),
+      });
+    } catch (err) {
+      console.warn("draw-steel-hideout | Failed to persist treasure browser filters:", err);
+    }
   }
 
   static async #onSelectRow(event, target) {
@@ -400,7 +452,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
   }
 
   static async #onAddSelectedToStash(event, target) {
-    if (!game.user.isGM) {
+    if (!hasGMPermission()) {
       ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Stash.PlayerCannotAdd"));
       return;
     }
@@ -424,7 +476,7 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
   }
 
   static async #onAddSelectedToArchives(event, target) {
-    if (!game.user.isGM) {
+    if (!hasGMPermission()) {
       ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Archives.PlayerCannotAdd"));
       return;
     }

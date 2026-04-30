@@ -251,6 +251,7 @@
   {{!-- ==================  ARCHIVES TAB  ================== --}}
   {{#dshideout-eq activeTab "archives"}}
   <div class="dshideout-archives-panel {{#if isGM}}is-gm{{else}}is-player{{/if}}"
+       {{#if isGM}}data-archives-drop-zone{{/if}}
        style="--dshideout-archive-prereq-w: {{archivePrereqWidth}}px;">
     <hr class="dshideout-divider" />
     <div class="dshideout-archives-list">
@@ -353,6 +354,7 @@
         <div class="dshideout-empty-state">
           <i class="fas fa-book-open dshideout-empty-icon"></i>
           <p>{{localize "DSHIDEOUT.Archives.None"}}</p>
+          {{#if isGM}}<p class="dshideout-empty-hint">{{localize "DSHIDEOUT.Archives.DropHint"}}</p>{{/if}}
         </div>
       {{/if}}
     </div>

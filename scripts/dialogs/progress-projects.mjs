@@ -67,9 +67,25 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
         if (!actor) continue;
 
         if (!this.#rollOptions.has(actorId)) {
-          this.#rollOptions.set(actorId, { edges: 0, banes: 0 });
+          this.#rollOptions.set(actorId, { edges: 0, banes: 0, skill: "" });
         }
         const opts = this.#rollOptions.get(actorId);
+        // Backfill skill key if this map entry pre-dates the skill column.
+        if (!("skill" in opts)) opts.skill = "";
+
+        // Build per-actor skill options. Followers (actor + item) and heroes
+        // all expose `system.skills.value` as a Set of skill keys.
+        const skillKeys = Array.from(actor.system.skills?.value ?? []);
+        const skillOptions = [{ key: "", label: game.i18n.localize("DSHIDEOUT.ProgressProjects.SkillNone") }];
+        for (const key of skillKeys) {
+          const label = ds.CONFIG.skills?.list?.[key]?.label ?? key;
+          skillOptions.push({ key, label });
+        }
+        skillOptions.sort((a, b) => {
+          if (!a.key) return -1;
+          if (!b.key) return 1;
+          return a.label.localeCompare(b.label, game.i18n.lang);
+        });
 
         // Show only the single highest-value applicable characteristic for this actor
         const chars = project.rollCharacteristic ?? [];
@@ -94,6 +110,8 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
           charList,
           edges: opts.edges,
           banes: opts.banes,
+          skill: opts.skill ?? "",
+          skillOptions,
           isEvenRow: rowIndex % 2 === 0,
           alreadyRolled,
         });
@@ -132,15 +150,19 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
 
     const el = this.element;
 
-    // Edge/bane selects
+    // Edge/bane/skill selects
     for (const sel of el.querySelectorAll("[data-roll-option]")) {
       sel.addEventListener("change", (e) => {
         const actorId = e.target.dataset.actorId;
         const option = e.target.dataset.rollOption;
         if (!actorId || !option) return;
 
-        const opts = this.#rollOptions.get(actorId) ?? { edges: 0, banes: 0 };
-        opts[option] = parseInt(e.target.value) || 0;
+        const opts = this.#rollOptions.get(actorId) ?? { edges: 0, banes: 0, skill: "" };
+        if (option === "skill") {
+          opts.skill = e.target.value || "";
+        } else {
+          opts[option] = parseInt(e.target.value) || 0;
+        }
         this.#rollOptions.set(actorId, opts);
       });
     }
@@ -186,7 +208,16 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       const actor = game.actors.get(actorId);
       const project = projects.find(p => p.id === projectId);
       if (!actor || !project) continue;
-      const opts = this.#rollOptions.get(actorId) ?? { edges: 0, banes: 0 };
+      const opts = this.#rollOptions.get(actorId) ?? { edges: 0, banes: 0, skill: "" };
+      // Cap (edges_bonus + skill_bonus) at +4 so a 2-edge actor with a skill
+      // can't exceed the system's edge cap. Banes stay separate.
+      const netBoon = (opts.edges ?? 0) - (opts.banes ?? 0);
+      const edgeBonus = netBoon > 0 ? Math.min(4, 2 * netBoon) : 0;
+      const skillBaseBonus = opts.skill ? 2 : 0;
+      const cappedSum = Math.min(4, edgeBonus + skillBaseBonus);
+      const skillBonus = Math.max(0, cappedSum - edgeBonus);
+      const skillLabel = opts.skill ? (ds.CONFIG.skills?.list?.[opts.skill]?.label ?? opts.skill) : null;
+
       // Pick the highest-value applicable characteristic for this actor,
       // matching the logic used in _prepareContext for display.
       const chars = project.rollCharacteristic ?? [];
@@ -199,7 +230,7 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       const rollKey = CHARACTERISTIC_ROLL_KEYS[bestCharKey] ?? "M";
       const formula = `2d10 + @${rollKey}`;
       const rollData = actor.getRollData?.() ?? {};
-      rowConfigs.push({ actor, project, opts, charKey: bestCharKey, formula, rollData });
+      rowConfigs.push({ actor, project, opts: { ...opts, bonuses: skillBonus, skillLabel }, charKey: bestCharKey, formula, rollData });
     }
 
     // No remaining rolls = "Reset Project Rolls" mode: still resolve events,

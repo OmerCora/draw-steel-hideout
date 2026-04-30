@@ -21,6 +21,7 @@
             <tr>
               <th>{{localize "DSHIDEOUT.ProgressProjects.Actor"}}</th>
               <th>{{localize "DSHIDEOUT.ProgressProjects.Characteristic"}}</th>
+              <th>{{localize "DSHIDEOUT.ProgressProjects.Skill"}}</th>
               <th>{{localize "DSHIDEOUT.ProgressProjects.Edges"}}</th>
               <th>{{localize "DSHIDEOUT.ProgressProjects.Banes"}}</th>
             </tr>
@@ -40,8 +41,8 @@
                 </td>
 
                 {{#if this.alreadyRolled}}
-                  {{!-- Already-rolled row: spans the remaining 3 columns --}}
-                  <td class="dshideout-progress-already-rolled" colspan="3">
+                  {{!-- Already-rolled row: spans the remaining 4 columns --}}
+                  <td class="dshideout-progress-already-rolled" colspan="4">
                     <i class="fas fa-check"></i>
                     {{localize "DSHIDEOUT.ProgressProjects.AlreadyRolled"}}
                   </td>
@@ -53,6 +54,15 @@
                         {{this.label}}: {{this.value}}
                       </span>
                     {{/each}}
+                  </td>
+
+                  {{!-- Skill --}}
+                  <td class="dshideout-progress-select-cell">
+                    <select data-roll-option="skill" data-actor-id="{{this.actorId}}" class="dshideout-select dshideout-small-select">
+                      {{#each this.skillOptions}}
+                        <option value="{{this.key}}" {{#dshideout-eq this.key ../skill}}selected{{/dshideout-eq}}>{{this.label}}</option>
+                      {{/each}}
+                    </select>
                   </td>
 
                   {{!-- Edges --}}

@@ -34,7 +34,7 @@
   "DSHIDEOUT.Projects.RemoveTitle": "Remove Project",
   "DSHIDEOUT.Projects.RestartProject": "Restart Project",
   "DSHIDEOUT.Projects.RestartConfirmTitle": "Restart Project",
-  "DSHIDEOUT.Projects.RestartConfirm": "Reset \"{name}\" back to ongoing with no progress?",
+  "DSHIDEOUT.Projects.RestartConfirm": "Restart project \"{name}\"?",
   "DSHIDEOUT.Projects.CompletedBadge": "Completed",
   "DSHIDEOUT.Projects.ReassignWarning": "{actor} moved from \"{oldProject}\" to \"{newProject}\".",
   "DSHIDEOUT.Projects.AddedNotice": "\"{name}\" added to projects.",
@@ -235,6 +235,34 @@
   "DSHIDEOUT.Archives.AlreadyAdded": "\u201c{name}\u201d is already in the archives.",
   "DSHIDEOUT.Archives.NoCraftingData": "This item has no crafting project data.",
   "DSHIDEOUT.Archives.PlayerCannotAdd": "Only the Gamemaster can add items to the archives.",
+  "DSHIDEOUT.Archives.NotATreasure": "Only treasure-type items can be added to the archives.",
+  "DSHIDEOUT.Archives.NotAProjectItem": "This item has no crafting project data and cannot be added to the archives.",
+  "DSHIDEOUT.Archives.DropHint": "Drop a treasure item with crafting project data here to add it",
+
+  "DSHIDEOUT.Projects.CarryOverflowLabel": "Carry Overflow Progress on Restart",
+  "DSHIDEOUT.Projects.CarryOverflowHint": "When enabled, restarting a completed project preserves any progress beyond the goal (e.g. 50/45 → 5/45).",
+
+  "DSHIDEOUT.Chat.ProjectRestartedOverflowMsg": "Project <em>{project}</em> has been reset; <strong>{overflow}</strong> overflow progress carries into the new attempt.",
+
+  "DSHIDEOUT.ProgressProjects.Skill": "Skill",
+  "DSHIDEOUT.ProgressProjects.SkillNone": "— None —",
+
+  "DSHIDEOUT.Browser.ResetFilters": "Reset Filters",
+
+  "DSHIDEOUT.Settings.MinimumGmRole.Name": "Minimum Role for Gamemaster Views & Buttons",
+  "DSHIDEOUT.Settings.MinimumGmRole.Hint": "The minimum user role treated as a Gamemaster by this module. Users at or above this role see GM-only buttons and panels (footer actions, project deletion, archive add/remove, party stash plus/minus). Default is Gamemaster.",
+
+  "DSHIDEOUT.Settings.DefaultProjectSettings.Name": "Default Project Settings",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.Hint": "Configure the default values applied to newly added projects.",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.OpenLabel": "Configure Defaults…",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.DialogTitle": "Default Project Settings",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.DialogHint": "These values are applied as defaults when a new project is added. Existing projects are not changed.",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.TableHint": "Default event table to assign to new projects (when events are enabled).",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.NoTable": "— None —",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.Save": "Save",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.Reset": "Reset to Defaults",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.Saved": "Default project settings saved.",
+  "DSHIDEOUT.Settings.DefaultProjectSettings.ResetDone": "Default project settings reset to factory values.",
 
   "DSHIDEOUT.Settings.MinimumRole.Name": "Minimum Role for Player Operations",
   "DSHIDEOUT.Settings.MinimumRole.Hint": "The minimum user role required to assign contributors to projects and roll project progress. Set to Gamemaster to restrict all writes to the GM only.",

@@ -6,7 +6,7 @@
 import { MODULE_ID, FOLLOWER_TYPE, HIDEOUT_FOLDER, SETTINGS } from "../config.mjs";
 import {
   getProjects, addProject, removeProject, updateProject, assignContributor,
-  removeContributor, getContributingProject, markYieldObtained, unmarkIndividualRoll,
+  removeContributor, getContributingProject, unmarkIndividualRoll,
 } from "./project-manager.mjs";
 import {
   getStash, addStashItem, removeStashItem, changeStashQuantity,
@@ -15,7 +15,7 @@ import {
   getArchives, addArchiveEntry, removeArchiveEntry, updateArchiveEntry,
 } from "./archives-manager.mjs";
 import { extractLanguageFromSource } from "../language-helper.mjs";
-import { saveWorldSetting, hasHideoutPermission } from "../socket.mjs";
+import { saveWorldSetting, hasHideoutPermission, hasGMPermission } from "../socket.mjs";
 import { ProjectBrowserApp } from "../browsers/project-browser.mjs";
 import { TreasureBrowserApp } from "../browsers/treasure-browser.mjs";
 import { CreateFollowerDialog } from "../dialogs/create-follower.mjs";
@@ -153,7 +153,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   /* -------------------------------------------------- */
 
   async _prepareContext(options) {
-    const isGM = game.user.isGM;
+    const isGM = hasGMPermission();
 
     // ── Roster ───────────────────────────────────────
     const heroes = this.#buildRosterHeroes();
@@ -247,7 +247,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
         img: actor.img,
         uuid: actor.uuid,
         isOwner: actor.isOwner,
-        isGMOrOwner: game.user.isGM || actor.isOwner,
+        isGMOrOwner: hasGMPermission() || actor.isOwner,
         contributingProjectId: contributingProject?.id ?? null,
         contributingProjectName: contributingProject?.name ?? null,
       };
@@ -256,7 +256,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   #buildRosterFollowers() {
     const rosterIds = new Set(HideoutApp.#getRosterFollowerIds());
-    const isGM = game.user.isGM;
+    const isGM = hasGMPermission();
     const charOrder = ["might", "agility", "reason", "intuition", "presence"];
     const charLabels = { might: "Might", agility: "Agility", reason: "Reason", intuition: "Intuition", presence: "Presence" };
 
@@ -445,7 +445,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const allActors = this.#buildRosterHeroes().concat(this.#buildRosterFollowers());
     const actorMap = new Map(allActors.map(a => [a.id, a]));
     const individualRollsEnabled = game.settings.get(MODULE_ID, SETTINGS.ALLOW_INDIVIDUAL_ROLLS);
-    const isGM = game.user.isGM;
+    const isGM = hasGMPermission();
     const myCharacterId = game.user.character?.id ?? null;
 
     return Promise.all(projects.map(async p => {
@@ -638,7 +638,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this._attachDropHandlers();
 
     // Wire GM project points editor
-    if (game.user.isGM) {
+    if (hasGMPermission()) {
       for (const input of this.element.querySelectorAll(".dshideout-points-input")) {
         input.addEventListener("change", async (e) => {
           const projectId = input.dataset.projectId;
@@ -784,6 +784,22 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (projectsZone) {
       projectsZone.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }, { signal });
       projectsZone.addEventListener("drop", this.#onDropItemAsProject.bind(this), { signal });
+    }
+
+    // Archives drop zone — accept treasure items with project data
+    const archivesZone = el.querySelector("[data-archives-drop-zone]");
+    if (archivesZone && hasGMPermission()) {
+      archivesZone.addEventListener("dragover", (e) => {
+        if (e.dataTransfer.types.includes("application/x-dshideout-stash")) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        archivesZone.classList.add("drag-over");
+      }, { signal });
+      archivesZone.addEventListener("dragleave", () => archivesZone.classList.remove("drag-over"), { signal });
+      archivesZone.addEventListener("drop", (e) => {
+        archivesZone.classList.remove("drag-over");
+        this.#onDropItemToArchives(e);
+      }, { signal });
     }
 
     // Follower roster drop zone — actors from sidebar
@@ -968,7 +984,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (!actor || !["hero", FOLLOWER_TYPE].includes(actor.type)) return;
 
     // Permission check
-    const isGM = game.user.isGM;
+    const isGM = hasGMPermission();
     if (!isGM) {
       // Players can only drag their own character or their mentored/unassigned followers
       const isOwnHero = actor.type === "hero" && game.user.character?.id === actor.id;
@@ -1082,6 +1098,65 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
 
     await this._addProjectFromItem(item);
+    this.render({ parts: ["main"] });
+  }
+
+  /**
+   * Drop a treasure item onto the Archives panel. Adds it to archives if it
+   * has project data; warns the user otherwise. Dedupes by UUID.
+   */
+  async #onDropItemToArchives(event) {
+    event.preventDefault();
+    if (!hasGMPermission()) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Permission.Denied"));
+      return;
+    }
+
+    if (event.dataTransfer.types.includes("application/x-dshideout-stash")) return;
+
+    let dragData;
+    try {
+      dragData = JSON.parse(event.dataTransfer.getData("text/plain"));
+    } catch {
+      return;
+    }
+
+    if (dragData?.type !== "Item") return;
+    const item = await fromUuid(dragData.uuid);
+    if (!item) return;
+    if (item.type !== "treasure") {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Archives.NotATreasure"));
+      return;
+    }
+    if (!item.system?.project?.goal) {
+      ui.notifications.warn(game.i18n.format("DSHIDEOUT.Archives.NotAProjectItem", { name: item.name }));
+      return;
+    }
+
+    // Resolve canonical source UUID (prefer compendium sourceId, then world UUID)
+    const sourceId = item.flags?.core?.sourceId ?? null;
+    const isEmbedded = !!item.parent;
+    const archiveUuid = isEmbedded ? (sourceId ?? item.uuid) : item.uuid;
+
+    const sys = item.system;
+    const added = await addArchiveEntry({
+      uuid: archiveUuid,
+      name: item.name,
+      img: item.img,
+      description: sys.description?.value ?? "",
+      category: sys.category ?? "",
+      echelon: sys.echelon ?? 0,
+      keywords: _resolveTreasureKeywordLabels(sys.keywords, sys.category, sys.kind),
+      hasCraftingData: true,
+      projectData: sys.project ?? null,
+    });
+
+    if (!added) {
+      ui.notifications.warn(game.i18n.format("DSHIDEOUT.Archives.AlreadyAdded", { name: item.name }));
+      return;
+    }
+
+    ui.notifications.info(game.i18n.format("DSHIDEOUT.Archives.ItemAdded", { name: item.name }));
     this.render({ parts: ["main"] });
   }
 
@@ -1394,7 +1469,13 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       echelon: yieldItem.system.echelon ?? 0,
     }, quantity);
 
-    await markYieldObtained(projectId);
+    // Compute carry-overflow before resetting (same logic as #onRestartProject).
+    let carryPoints = 0;
+    if (project.carryOverflow && project.goal && project.points > project.goal) {
+      carryPoints = project.points - project.goal;
+    }
+
+    await updateProject(projectId, { completed: false, points: carryPoints, yieldObtained: false, eventsTriggeredMilestones: [] });
     ui.notifications.info(`Added ${quantity}× ${yieldItem.name} to the party stash.`);
     const displayName = project.additionalDetail
       ? `${project.name} (${project.additionalDetail})` : project.name;
@@ -1417,9 +1498,18 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     });
     if (!confirmed) return;
 
-    await updateProject(projectId, { completed: false, points: 0, yieldObtained: false, eventsTriggeredMilestones: [] });
+    // Carry over progress that exceeded the goal, if the project opted in.
+    let newPoints = 0;
+    let overflow = 0;
+    if (project.carryOverflow && project.completed && project.goal && project.points > project.goal) {
+      overflow = project.points - project.goal;
+      newPoints = overflow;
+    }
+
+    await updateProject(projectId, { completed: false, points: newPoints, yieldObtained: false, eventsTriggeredMilestones: [] });
+    const restartedKey = overflow > 0 ? "DSHIDEOUT.Chat.ProjectRestartedOverflowMsg" : "DSHIDEOUT.Chat.ProjectRestartedMsg";
     await ChatMessage.create({
-      content: `<p><strong>${game.i18n.localize("DSHIDEOUT.Chat.ProjectRestarted")}</strong> — ${game.i18n.format("DSHIDEOUT.Chat.ProjectRestartedMsg", { project: project.name })}</p>`,
+      content: `<p><strong>${game.i18n.localize("DSHIDEOUT.Chat.ProjectRestarted")}</strong> — ${game.i18n.format(restartedKey, { project: project.name, overflow })}</p>`,
       speaker: { alias: game.i18n.localize("DSHIDEOUT.Chat.Alias") },
     });
     this.render({ parts: ["main"] });
@@ -1519,7 +1609,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onIncreaseCraftCount(event, target) {
-    if (!game.user.isGM) return;
+    if (!hasGMPermission()) return;
     const itemId = target.dataset.archiveItemId;
     const archives = getArchives();
     const entry = archives.find(i => i.id === itemId);
@@ -1529,7 +1619,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onDecreaseCraftCount(event, target) {
-    if (!game.user.isGM) return;
+    if (!hasGMPermission()) return;
     const itemId = target.dataset.archiveItemId;
     const archives = getArchives();
     const entry = archives.find(i => i.id === itemId);
@@ -1541,6 +1631,10 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   static async #onRemoveArchiveEntry(event, target) {
+    if (!hasGMPermission()) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Permission.Denied"));
+      return;
+    }
     const itemId = target.dataset.archiveItemId;
     const archives = getArchives();
     const entry = archives.find(i => i.id === itemId);

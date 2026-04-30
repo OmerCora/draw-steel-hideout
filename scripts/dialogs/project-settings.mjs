@@ -74,6 +74,7 @@ export class ProjectSettingsDialog extends HandlebarsApplicationMixin(Applicatio
       ],
       currentMode: this.#project.eventsMode ?? "disabled",
       postPrivate: this.#project.postEventsPrivate !== false,
+      carryOverflow: !!this.#project.carryOverflow,
       additionalDetail: this.#project.additionalDetail ?? "",
     };
   }
@@ -90,10 +91,11 @@ export class ProjectSettingsDialog extends HandlebarsApplicationMixin(Applicatio
     const eventsMode       = form.elements["eventsMode"]?.value ?? "disabled";
     const eventTableUuid   = form.elements["eventTableUuid"]?.value || null;
     const postEventsPrivate = !!form.elements["postEventsPrivate"]?.checked;
+    const carryOverflow    = !!form.elements["carryOverflow"]?.checked;
 
     // Reset milestone tracking when the table changes — old milestones fired
     // for the old table shouldn't block the new table.
-    const changes = { additionalDetail, eventsMode, eventTableUuid, postEventsPrivate };
+    const changes = { additionalDetail, eventsMode, eventTableUuid, postEventsPrivate, carryOverflow };
     if (eventTableUuid !== this.#project.eventTableUuid) {
       changes.eventsTriggeredMilestones = [];
     }

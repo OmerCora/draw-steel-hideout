@@ -1591,6 +1591,17 @@
   gap: 8px;
 }
 
+.draw-steel-hideout .dshideout-filter-row .dshideout-reset-filters {
+  margin-left: auto;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
 .draw-steel-hideout .dshideout-browser-count {
   font-size: 0.72rem;
   opacity: 0.55;
@@ -2018,13 +2029,15 @@
 }
 
 .draw-steel-hideout .dshideout-progress-table th:nth-child(1),
-.draw-steel-hideout .dshideout-progress-table td:nth-child(1) { width: 38%; }
+.draw-steel-hideout .dshideout-progress-table td:nth-child(1) { width: 28%; }
 .draw-steel-hideout .dshideout-progress-table th:nth-child(2),
-.draw-steel-hideout .dshideout-progress-table td:nth-child(2) { width: 28%; }
+.draw-steel-hideout .dshideout-progress-table td:nth-child(2) { width: 16%; }
 .draw-steel-hideout .dshideout-progress-table th:nth-child(3),
-.draw-steel-hideout .dshideout-progress-table td:nth-child(3) { width: 17%; }
+.draw-steel-hideout .dshideout-progress-table td:nth-child(3) { width: 30%; }
 .draw-steel-hideout .dshideout-progress-table th:nth-child(4),
-.draw-steel-hideout .dshideout-progress-table td:nth-child(4) { width: 17%; }
+.draw-steel-hideout .dshideout-progress-table td:nth-child(4) { width: 13%; }
+.draw-steel-hideout .dshideout-progress-table th:nth-child(5),
+.draw-steel-hideout .dshideout-progress-table td:nth-child(5) { width: 13%; }
 
 .draw-steel-hideout .dshideout-progress-table th {
   text-align: left;
@@ -2127,6 +2140,12 @@
 .draw-steel-hideout .dshideout-progress-select-cell {
   vertical-align: middle;
   text-align: center;
+}
+
+.draw-steel-hideout .dshideout-progress-select-cell select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .draw-steel-hideout .dshideout-progress-actor {

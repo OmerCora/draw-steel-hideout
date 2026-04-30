@@ -25,7 +25,7 @@ export class IndividualProjectRollDialog extends HandlebarsApplicationMixin(Appl
   #actorId;
   #projectId;
   #hideoutApp;
-  #rollOptions = { edges: 0, banes: 0 };
+  #rollOptions = { edges: 0, banes: 0, skill: "" };
 
   static DEFAULT_OPTIONS = {
     id: "dshideout-individual-project-roll",
@@ -67,6 +67,18 @@ export class IndividualProjectRollDialog extends HandlebarsApplicationMixin(Appl
       value: bestChar.value,
     }] : [];
 
+    const skillKeys = Array.from(actor.system.skills?.value ?? []);
+    const skillOptions = [{ key: "", label: game.i18n.localize("DSHIDEOUT.ProgressProjects.SkillNone") }];
+    for (const key of skillKeys) {
+      const label = ds.CONFIG.skills?.list?.[key]?.label ?? key;
+      skillOptions.push({ key, label });
+    }
+    skillOptions.sort((a, b) => {
+      if (!a.key) return -1;
+      if (!b.key) return 1;
+      return a.label.localeCompare(b.label, game.i18n.lang);
+    });
+
     return {
       hasError: false,
       project: {
@@ -83,6 +95,8 @@ export class IndividualProjectRollDialog extends HandlebarsApplicationMixin(Appl
       charList,
       edges: this.#rollOptions.edges,
       banes: this.#rollOptions.banes,
+      skill: this.#rollOptions.skill ?? "",
+      skillOptions,
     };
   }
 
@@ -94,7 +108,11 @@ export class IndividualProjectRollDialog extends HandlebarsApplicationMixin(Appl
       sel.addEventListener("change", (e) => {
         const option = e.target.dataset.rollOption;
         if (!option) return;
-        this.#rollOptions[option] = parseInt(e.target.value) || 0;
+        if (option === "skill") {
+          this.#rollOptions.skill = e.target.value || "";
+        } else {
+          this.#rollOptions[option] = parseInt(e.target.value) || 0;
+        }
       });
     }
   }
@@ -147,10 +165,26 @@ export class IndividualProjectRollDialog extends HandlebarsApplicationMixin(Appl
       P: actor.system.characteristics?.presence?.value ?? 0,
     };
 
+    // Cap (edges_bonus + skill_bonus) at +4. Banes stay separate.
+    const netBoon = (this.#rollOptions.edges ?? 0) - (this.#rollOptions.banes ?? 0);
+    const edgeBonus = netBoon > 0 ? Math.min(4, 2 * netBoon) : 0;
+    const skillBaseBonus = this.#rollOptions.skill ? 2 : 0;
+    const cappedSum = Math.min(4, edgeBonus + skillBaseBonus);
+    const skillBonus = Math.max(0, cappedSum - edgeBonus);
+    const skillLabel = this.#rollOptions.skill
+      ? (ds.CONFIG.skills?.list?.[this.#rollOptions.skill]?.label ?? this.#rollOptions.skill)
+      : null;
+
     const cfg = {
       actor,
       project,
-      opts: { edges: this.#rollOptions.edges, banes: this.#rollOptions.banes },
+      opts: {
+        edges: this.#rollOptions.edges,
+        banes: this.#rollOptions.banes,
+        skill: this.#rollOptions.skill,
+        bonuses: skillBonus,
+        skillLabel,
+      },
       charKey: bestCharKey,
       formula,
       rollData,

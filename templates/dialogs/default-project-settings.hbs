@@ -1,21 +1,10 @@
-<form class="dshideout-project-settings-form">
-  <div class="dshideout-form-section">
-    <h3 class="dshideout-project-settings-name">{{project.name}}</h3>
-  </div>
+<form class="dshideout-default-project-settings-form">
+  <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Settings.DefaultProjectSettings.DialogHint"}}</p>
 
-  {{!-- Additional Details --}}
+  {{!-- Event mode --}}
   <div class="dshideout-form-row">
-    <label for="dshideout-ps-detail">{{localize "DSHIDEOUT.Projects.AdditionalDetailLabel"}}</label>
-    <input type="text" id="dshideout-ps-detail" name="additionalDetail"
-           value="{{additionalDetail}}" maxlength="80"
-           placeholder="{{localize 'DSHIDEOUT.ProjectBrowser.DetailPlaceholder'}}" />
-    <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Projects.AdditionalDetailHint"}}</p>
-  </div>
-
-  {{!-- Project Events mode --}}
-  <div class="dshideout-form-row">
-    <label for="dshideout-ps-mode">{{localize "DSHIDEOUT.Events.ModeLabel"}}</label>
-    <select id="dshideout-ps-mode" name="eventsMode">
+    <label for="dshideout-dps-mode">{{localize "DSHIDEOUT.Events.ModeLabel"}}</label>
+    <select id="dshideout-dps-mode" name="eventsMode">
       {{#each eventModeChoices}}
         <option value="{{this.value}}" {{#if (dshideout-eq this.value ../currentMode)}}selected{{/if}}>
           {{localize this.label}}
@@ -24,19 +13,20 @@
     </select>
   </div>
 
-  {{!-- Event Table --}}
+  {{!-- Event table --}}
   <div class="dshideout-form-row">
-    <label for="dshideout-ps-table">{{localize "DSHIDEOUT.Events.TableLabel"}}</label>
-    <select id="dshideout-ps-table" name="eventTableUuid">
+    <label for="dshideout-dps-table">{{localize "DSHIDEOUT.Events.TableLabel"}}</label>
+    <select id="dshideout-dps-table" name="eventTableUuid">
       {{#each tables}}
         <option value="{{this.uuid}}" {{#if (dshideout-eq this.uuid ../currentUuid)}}selected{{/if}}>
           {{this.name}}{{#if (dshideout-eq this.source "world")}} (World){{/if}}
         </option>
       {{/each}}
     </select>
+    <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Settings.DefaultProjectSettings.TableHint"}}</p>
   </div>
 
-  {{!-- Post Event Roll as Private Message --}}
+  {{!-- Private chat --}}
   <div class="dshideout-form-row dshideout-form-row-checkbox">
     <label>
       <input type="checkbox" name="postEventsPrivate" {{#if postPrivate}}checked{{/if}} />
@@ -45,7 +35,7 @@
     <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Events.PostPrivateHint"}}</p>
   </div>
 
-  {{!-- Carry over overflow points on restart --}}
+  {{!-- Carry-over overflow --}}
   <div class="dshideout-form-row dshideout-form-row-checkbox">
     <label>
       <input type="checkbox" name="carryOverflow" {{#if carryOverflow}}checked{{/if}} />

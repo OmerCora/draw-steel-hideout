@@ -20,8 +20,24 @@ export const SETTINGS = {
   ITEM_FOLLOWERS: "roster-item-followers",
   ARCHIVES: "archives",
   MINIMUM_ROLE: "minimumRole",
+  MINIMUM_GM_ROLE: "minimumGmRole",
   ALLOW_INDIVIDUAL_ROLLS: "allowIndividualRolls",
+  DEFAULT_PROJECT_SETTINGS: "defaultProjectSettings",
+  PROJECT_BROWSER_FILTERS: "projectBrowserFilters",
+  TREASURE_BROWSER_FILTERS: "treasureBrowserFilters",
 };
+
+/**
+ * Default values applied to newly-created projects when no override is given.
+ * The Default Project Settings dialog persists the world-level overrides; this
+ * object is the factory baseline used to reset/initialise that setting.
+ */
+export const PROJECT_SETTING_DEFAULTS = Object.freeze({
+  eventsMode: "disabled",
+  eventTableUuid: null,
+  postEventsPrivate: true,
+  carryOverflow: false,
+});
 
 /** Default compendium pack IDs that contain project-type items. */
 export const DEFAULT_PROJECT_PACK_IDS = new Set(["draw-steel.rewards"]);

@@ -3,7 +3,7 @@
  * Module entry point: register settings, data models, hooks, sidebar button, templates.
  */
 
-import { MODULE_ID, SYSTEM_ID, FOLLOWER_TYPE, SETTINGS } from "./config.mjs";
+import { MODULE_ID, SYSTEM_ID, FOLLOWER_TYPE, SETTINGS, PROJECT_SETTING_DEFAULTS } from "./config.mjs";
 import { registerFollowerModel } from "./data-models/follower-model.mjs";
 import { getFollowerSheetClass } from "./sheets/follower-sheet.mjs";
 import { HideoutApp } from "./hideout/hideout-app.mjs";
@@ -11,6 +11,7 @@ import { getStash, removeStashItem, changeStashQuantity } from "./hideout/stash-
 import { registerSocket, HIDEOUT_SETTING_KEYS } from "./socket.mjs";
 import { ProgressProjectsDialog } from "./dialogs/progress-projects.mjs";
 import { clearAllIndividualRolls } from "./hideout/project-manager.mjs";
+import { DefaultProjectSettingsDialog } from "./dialogs/default-project-settings.mjs";
 /* -------------------------------------------------- */
 /*  Init                                              */
 /* -------------------------------------------------- */
@@ -67,6 +68,59 @@ Hooks.once("init", () => {
     },
   });
 
+  game.settings.register(MODULE_ID, SETTINGS.MINIMUM_GM_ROLE, {
+    name: "DSHIDEOUT.Settings.MinimumGmRole.Name",
+    hint: "DSHIDEOUT.Settings.MinimumGmRole.Hint",
+    scope: "world",
+    config: true,
+    type: Number,
+    default: CONST.USER_ROLES.GAMEMASTER,
+    choices: {
+      [CONST.USER_ROLES.PLAYER]: "USER.RolePlayer",
+      [CONST.USER_ROLES.TRUSTED]: "USER.RoleTrusted",
+      [CONST.USER_ROLES.ASSISTANT]: "USER.RoleAssistant",
+      [CONST.USER_ROLES.GAMEMASTER]: "USER.RoleGamemaster",
+    },
+    onChange: () => {
+      if (HideoutApp._instance?.rendered) {
+        HideoutApp._instance.render({ parts: ["roster", "main", "actionBar"] });
+      }
+    },
+  });
+
+  // World object: per-project default values applied to newly-created projects.
+  game.settings.register(MODULE_ID, SETTINGS.DEFAULT_PROJECT_SETTINGS, {
+    scope: "world",
+    config: false,
+    type: Object,
+    default: { ...PROJECT_SETTING_DEFAULTS },
+  });
+
+  // Settings menu — opens the dialog to edit per-project defaults.
+  game.settings.registerMenu(MODULE_ID, "defaultProjectSettingsMenu", {
+    name: "DSHIDEOUT.Settings.DefaultProjectSettings.Name",
+    hint: "DSHIDEOUT.Settings.DefaultProjectSettings.Hint",
+    label: "DSHIDEOUT.Settings.DefaultProjectSettings.OpenLabel",
+    icon: "fa-solid fa-sliders",
+    type: DefaultProjectSettingsDialog,
+    restricted: true,
+  });
+
+  // Client-scope persisted browser filters (per user, per device).
+  game.settings.register(MODULE_ID, SETTINGS.PROJECT_BROWSER_FILTERS, {
+    scope: "client",
+    config: false,
+    type: Object,
+    default: {},
+  });
+
+  game.settings.register(MODULE_ID, SETTINGS.TREASURE_BROWSER_FILTERS, {
+    scope: "client",
+    config: false,
+    type: Object,
+    default: {},
+  });
+
   game.settings.register(MODULE_ID, SETTINGS.ALLOW_INDIVIDUAL_ROLLS, {
     name: "DSHIDEOUT.Settings.AllowIndividualRolls.Name",
     hint: "DSHIDEOUT.Settings.AllowIndividualRolls.Hint",
@@ -98,6 +152,8 @@ Hooks.once("init", () => {
     `modules/${MODULE_ID}/templates/dialogs/individual-project-roll.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/project-settings.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/project-settings-footer.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/default-project-settings.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/default-project-settings-footer.hbs`,
     // Follower actor sheet templates
     `modules/${MODULE_ID}/templates/sheets/follower-sheet/stats.hbs`,
     `modules/${MODULE_ID}/templates/sheets/follower-sheet/biography.hbs`,

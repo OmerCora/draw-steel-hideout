@@ -6,7 +6,7 @@
  * All mutations go through this module — never write the setting directly.
  */
 
-import { MODULE_ID, SETTINGS } from "../config.mjs";
+import { MODULE_ID, SETTINGS, PROJECT_SETTING_DEFAULTS } from "../config.mjs";
 import { saveWorldSetting } from "../socket.mjs";
 
 // ── Typedefs ──────────────────────────────────────────────────────────────────
@@ -36,6 +36,7 @@ import { saveWorldSetting } from "../socket.mjs";
  * @property {string}   eventsMode        "disabled" | "milestone" | "d6" | "guaranteed". Default "disabled".
  * @property {string|null} eventTableUuid UUID of the RollTable to roll for events (null = use default).
  * @property {boolean}  postEventsPrivate Post event chat messages as Private-to-GM. Default true.
+ * @property {boolean}  carryOverflow     If true, restarting a completed project carries over points beyond the goal.
  * @property {number[]} eventsTriggeredMilestones  Milestone fractions already triggered (e.g. [0.5]).
  */
 
@@ -74,6 +75,19 @@ export function getProjects() {
 export async function addProject(itemData) {
   const projects = _loadProjects();
 
+  // Pull world-defined defaults so projects honour the GM's "Default Project Settings".
+  let worldDefaults = {};
+  try {
+    worldDefaults = game.settings.get(MODULE_ID, SETTINGS.DEFAULT_PROJECT_SETTINGS) ?? {};
+  } catch {
+    worldDefaults = {};
+  }
+  const defaults = foundry.utils.mergeObject(
+    foundry.utils.deepClone(PROJECT_SETTING_DEFAULTS),
+    worldDefaults,
+    { inplace: false },
+  );
+
   /** @type {HideoutProject} */
   const project = {
     id: foundry.utils.randomID(),
@@ -96,9 +110,10 @@ export async function addProject(itemData) {
     yieldObtained: false,
     additionalDetail: itemData.additionalDetail ?? "",
     keywords: itemData.keywords ?? [],
-    eventsMode: itemData.eventsMode ?? "disabled",
-    eventTableUuid: itemData.eventTableUuid ?? null,
-    postEventsPrivate: itemData.postEventsPrivate ?? true,
+    eventsMode: itemData.eventsMode ?? defaults.eventsMode,
+    eventTableUuid: itemData.eventTableUuid ?? defaults.eventTableUuid ?? null,
+    postEventsPrivate: itemData.postEventsPrivate ?? defaults.postEventsPrivate,
+    carryOverflow: itemData.carryOverflow ?? defaults.carryOverflow,
     eventsTriggeredMilestones: [],
     individuallyRolledIds: [],
   };

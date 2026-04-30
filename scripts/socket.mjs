@@ -23,7 +23,11 @@ export const HIDEOUT_SETTING_KEYS = new Set([
   SETTINGS.PROJECTS,
   SETTINGS.STASH,
   SETTINGS.FOLLOWERS,
+  SETTINGS.ITEM_FOLLOWERS,
   SETTINGS.ARCHIVES,
+  SETTINGS.MINIMUM_ROLE,
+  SETTINGS.MINIMUM_GM_ROLE,
+  SETTINGS.DEFAULT_PROJECT_SETTINGS,
 ]);
 
 // ── Permission helper ─────────────────────────────────────────────────────────
@@ -35,6 +39,18 @@ export const HIDEOUT_SETTING_KEYS = new Set([
  */
 export function hasHideoutPermission() {
   const required = game.settings.get(MODULE_ID, SETTINGS.MINIMUM_ROLE);
+  return game.user.role >= required;
+}
+
+/**
+ * Returns true if the current user meets the minimum role required to see
+ * GM-only views and controls (project delete, +/- in stash & archives,
+ * footer action buttons, etc.). Defaults to GAMEMASTER which preserves the
+ * historical isGM-only behaviour.
+ * @returns {boolean}
+ */
+export function hasGMPermission() {
+  const required = game.settings.get(MODULE_ID, SETTINGS.MINIMUM_GM_ROLE);
   return game.user.role >= required;
 }
 

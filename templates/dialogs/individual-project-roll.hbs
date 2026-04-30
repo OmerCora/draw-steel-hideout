@@ -24,6 +24,7 @@
           <tr>
             <th>{{localize "DSHIDEOUT.ProgressProjects.Actor"}}</th>
             <th>{{localize "DSHIDEOUT.ProgressProjects.Characteristic"}}</th>
+            <th>{{localize "DSHIDEOUT.ProgressProjects.Skill"}}</th>
             <th>{{localize "DSHIDEOUT.ProgressProjects.Edges"}}</th>
             <th>{{localize "DSHIDEOUT.ProgressProjects.Banes"}}</th>
           </tr>
@@ -45,6 +46,14 @@
                   {{this.label}}: {{this.value}}
                 </span>
               {{/each}}
+            </td>
+
+            <td class="dshideout-progress-select-cell">
+              <select data-roll-option="skill" data-actor-id="{{actor.id}}" class="dshideout-select dshideout-small-select">
+                {{#each skillOptions}}
+                  <option value="{{this.key}}" {{#dshideout-eq this.key ../skill}}selected{{/dshideout-eq}}>{{this.label}}</option>
+                {{/each}}
+              </select>
             </td>
 
             <td class="dshideout-progress-select-cell">

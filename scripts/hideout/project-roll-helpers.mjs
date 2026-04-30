@@ -20,6 +20,7 @@ export async function rollBatch(configs) {
       const roll = new ProjectRoll(cfg.formula, cfg.rollData, {
         edges: cfg.opts.edges,
         banes: cfg.opts.banes,
+        bonuses: cfg.opts.bonuses ?? 0,
       });
       await roll.evaluate();
       // Natural breakthrough: sum of the active (kept) dice before the

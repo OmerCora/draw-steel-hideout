@@ -3,7 +3,8 @@
  * Project Browser: browse compendium/world project items and add to the Hideout tracker.
  */
 
-import { MODULE_ID, DEFAULT_PROJECT_PACK_IDS, PROJECT_INDEX_FIELDS } from "../config.mjs";
+import { MODULE_ID, DEFAULT_PROJECT_PACK_IDS, PROJECT_INDEX_FIELDS, SETTINGS } from "../config.mjs";
+import { hasGMPermission } from "../socket.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -148,6 +149,7 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
       selectRow: ProjectBrowserApp.#onSelectRow,
       clearSearch: ProjectBrowserApp.#onClearSearch,
       removeSource: ProjectBrowserApp.#onRemoveSource,
+      resetFilters: ProjectBrowserApp.#onResetFilters,
     },
   };
 
@@ -163,8 +165,24 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
       this.#index = await loadProjectIndex();
       _cachedSourceOptions = getProjectSourceOptions(this.#index);
       this.#loaded = true;
-      // Default: select all default sources
-      if (this.#sourceFilters.size === 0) {
+
+      // Restore persisted filters from client setting (per user, per device).
+      const stored = game.settings.get(MODULE_ID, SETTINGS.PROJECT_BROWSER_FILTERS) ?? {};
+      const validSourceValues = new Set((_cachedSourceOptions ?? []).map(s => s.value));
+      let restored = false;
+      if (typeof stored.typeFilter === "string") {
+        this.#typeFilter = stored.typeFilter;
+        restored = true;
+      }
+      if (Array.isArray(stored.sourceFilters)) {
+        for (const v of stored.sourceFilters) {
+          if (validSourceValues.has(v)) this.#sourceFilters.add(v);
+        }
+        restored = true;
+      }
+
+      // Default: select all default sources (only when nothing was restored)
+      if (!restored && this.#sourceFilters.size === 0) {
         for (const s of _cachedSourceOptions) {
           if (s.isDefault) this.#sourceFilters.add(s.value);
         }
@@ -225,7 +243,7 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
       availableSources: (_cachedSourceOptions ?? []).filter(s => !this.#sourceFilters.has(s.value)),
       searchText: this.#searchText,
       isLoading: !this.#loaded,
-      isGM: game.user.isGM,
+      isGM: hasGMPermission(),
       selectedEntry,
       selectedUuid: this.#selectedUuid,
     };
@@ -264,6 +282,7 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
     if (typeSelect) {
       typeSelect.addEventListener("change", (e) => {
         this.#typeFilter = e.target.value;
+        this.#saveFilters();
         this.render();
       });
     }
@@ -276,6 +295,7 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
         if (val) {
           this.#sourceFilters.add(val);
           e.target.value = "";
+          this.#saveFilters();
           this.render();
         }
       });
@@ -364,6 +384,33 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
 
   static #onRemoveSource(event, target) {
     this.#sourceFilters.delete(target.dataset.source);
+    this.#saveFilters();
     this.render();
+  }
+
+  static #onResetFilters(event, target) {
+    this.#typeFilter = "";
+    this.#sourceFilters.clear();
+    // Re-apply defaults from the source list (same logic as initial load).
+    for (const s of (_cachedSourceOptions ?? [])) {
+      if (s.isDefault) this.#sourceFilters.add(s.value);
+    }
+    if (this.#sourceFilters.size === 0) {
+      for (const s of (_cachedSourceOptions ?? [])) this.#sourceFilters.add(s.value);
+    }
+    this.#saveFilters();
+    this.render();
+  }
+
+  /** Persist current filter state to the client setting (fire-and-forget). */
+  #saveFilters() {
+    try {
+      game.settings.set(MODULE_ID, SETTINGS.PROJECT_BROWSER_FILTERS, {
+        typeFilter: this.#typeFilter ?? "",
+        sourceFilters: Array.from(this.#sourceFilters),
+      });
+    } catch (err) {
+      console.warn("draw-steel-hideout | Failed to persist project browser filters:", err);
+    }
   }
 }
