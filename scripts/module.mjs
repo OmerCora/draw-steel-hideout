@@ -201,6 +201,19 @@ Hooks.once("init", () => {
   // Register Handlebars helpers
   _registerHandlebarsHelpers();
 
+  // Keyboard shortcut: H → toggle the Hideout window
+  game.keybindings.register(MODULE_ID, "toggleHideout", {
+    name: "DSHIDEOUT.Keybinding.ToggleHideout.Name",
+    hint: "DSHIDEOUT.Keybinding.ToggleHideout.Hint",
+    editable: [{ key: "KeyP" }],
+    onDown: () => {
+      const minRole = game.settings.get(MODULE_ID, SETTINGS.MINIMUM_ROLE);
+      if (game.user.role < minRole) return false;
+      HideoutApp.toggle();
+      return true;
+    },
+  });
+
   console.log(`draw-steel-hideout | Initialized.`);
 });
 

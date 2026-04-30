@@ -2,6 +2,9 @@
   "DSHIDEOUT.WindowTitle": "Hideout",
   "DSHIDEOUT.SidebarButton": "Hideout",
 
+  "DSHIDEOUT.Keybinding.ToggleHideout.Name": "Toggle Hideout",
+  "DSHIDEOUT.Keybinding.ToggleHideout.Hint": "Open or close the Hideout window.",
+
   "DSHIDEOUT.Roster.Heroes": "Heroes",
   "DSHIDEOUT.Roster.Followers": "Followers",
   "DSHIDEOUT.Roster.NoHeroes": "No heroes in party",

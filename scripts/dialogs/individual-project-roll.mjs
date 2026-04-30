@@ -30,7 +30,7 @@ export class IndividualProjectRollDialog extends HandlebarsApplicationMixin(Appl
   static DEFAULT_OPTIONS = {
     id: "dshideout-individual-project-roll",
     classes: ["draw-steel-hideout", "dshideout-dialog"],
-    position: { width: 500, height: "auto" },
+    position: { width: 640, height: "auto" },
     window: {
       title: "DSHIDEOUT.IndividualRoll.Title",
       resizable: false,
