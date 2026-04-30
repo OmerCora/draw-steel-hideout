@@ -1870,6 +1870,27 @@
   margin-top: 0;
 }
 
+/* Checkbox list used by the browser filter defaults dialogs */
+.draw-steel-hideout .dshideout-source-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: rgba(128, 128, 128, 0.06);
+}
+
+.draw-steel-hideout .dshideout-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 .draw-steel-hideout .dshideout-form-label {
   font-size: 0.8rem;
   font-weight: 600;

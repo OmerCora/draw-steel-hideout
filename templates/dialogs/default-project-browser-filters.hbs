@@ -1,0 +1,29 @@
+<form class="dshideout-default-project-settings-form">
+  <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.DialogHint"}}</p>
+
+  {{!-- Type filter --}}
+  <div class="dshideout-form-row">
+    <label for="dshideout-dpbf-type">{{localize "DSHIDEOUT.Projects.TypeLabel"}}</label>
+    <select id="dshideout-dpbf-type" name="typeFilter">
+      {{#each typeOptions}}
+        <option value="{{this.value}}" {{#if (dshideout-eq this.value ../typeFilter)}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{!-- Source filters --}}
+  {{#if packOptions.length}}
+  <div class="dshideout-form-row">
+    <label>{{localize "DSHIDEOUT.Settings.DefaultBrowserFilters.DefaultSources"}}</label>
+    <div class="dshideout-source-check-list">
+      {{#each packOptions}}
+        <label class="dshideout-checkbox-row">
+          <input type="checkbox" name="sourceFilters" value="{{this.value}}" {{#if this.checked}}checked{{/if}} />
+          {{this.label}}
+        </label>
+      {{/each}}
+    </div>
+    <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Settings.DefaultBrowserFilters.SourcesHint"}}</p>
+  </div>
+  {{/if}}
+</form>

@@ -28,6 +28,17 @@ let _treasureCachedIndex = null;
 let _treasureCachedSourceOptions = null;
 
 /**
+ * Return the treasure browser source options, loading the index if not yet cached.
+ * Safe to call from outside the browser app (e.g. settings dialogs).
+ */
+export async function getTreasureBrowserSources() {
+  if (_treasureCachedSourceOptions) return _treasureCachedSourceOptions;
+  const index = await loadTreasureIndex();
+  _treasureCachedSourceOptions = getTreasureSourceOptions(index);
+  return _treasureCachedSourceOptions;
+}
+
+/**
  * Resolve a treasure item's keywords into a sorted array of localized label strings.
  * Mirrors TreasureModel.formattedKeywords for use on raw index entries.
  * @param {Set|Array|undefined} keywordSet
@@ -358,14 +369,25 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
   }
 
   static #onResetFilters(event, target) {
-    this.#categoryFilter = "";
-    this.#echelonFilter = 0;
+    const worldDefaults = game.settings.get(MODULE_ID, SETTINGS.DEFAULT_TREASURE_BROWSER_FILTERS) ?? {};
+    this.#categoryFilter = worldDefaults.categoryFilter ?? "";
+    this.#echelonFilter = Number.isFinite(worldDefaults.echelonFilter) ? worldDefaults.echelonFilter : 0;
     this.#sourceFilters.clear();
-    for (const s of (_treasureCachedSourceOptions ?? [])) {
-      if (s.isDefault) this.#sourceFilters.add(s.value);
+    const defaultSources = Array.isArray(worldDefaults.sourceFilters) ? worldDefaults.sourceFilters : null;
+    if (defaultSources?.length) {
+      const valid = new Set((_treasureCachedSourceOptions ?? []).map(s => s.value));
+      for (const v of defaultSources) {
+        if (valid.has(v)) this.#sourceFilters.add(v);
+      }
     }
+    // Fall back to isDefault sources when no world default is configured
     if (this.#sourceFilters.size === 0) {
-      for (const s of (_treasureCachedSourceOptions ?? [])) this.#sourceFilters.add(s.value);
+      for (const s of (_treasureCachedSourceOptions ?? [])) {
+        if (s.isDefault) this.#sourceFilters.add(s.value);
+      }
+      if (this.#sourceFilters.size === 0) {
+        for (const s of (_treasureCachedSourceOptions ?? [])) this.#sourceFilters.add(s.value);
+      }
     }
     this.#saveFilters();
     this.render();

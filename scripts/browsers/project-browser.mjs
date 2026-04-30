@@ -31,6 +31,17 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 let _cachedIndex = null;
 let _cachedSourceOptions = null;
 
+/**
+ * Return the project browser source options, loading the index if not yet cached.
+ * Safe to call from outside the browser app (e.g. settings dialogs).
+ */
+export async function getProjectBrowserSources() {
+  if (_cachedSourceOptions) return _cachedSourceOptions;
+  const index = await loadProjectIndex();
+  _cachedSourceOptions = getProjectSourceOptions(index);
+  return _cachedSourceOptions;
+}
+
 export async function loadProjectIndex() {
   const entries = [];
 
@@ -399,14 +410,24 @@ export class ProjectBrowserApp extends HandlebarsApplicationMixin(ApplicationV2)
   }
 
   static #onResetFilters(event, target) {
-    this.#typeFilter = "";
+    const worldDefaults = game.settings.get(MODULE_ID, SETTINGS.DEFAULT_PROJECT_BROWSER_FILTERS) ?? {};
+    this.#typeFilter = worldDefaults.typeFilter ?? "";
     this.#sourceFilters.clear();
-    // Re-apply defaults from the source list (same logic as initial load).
-    for (const s of (_cachedSourceOptions ?? [])) {
-      if (s.isDefault) this.#sourceFilters.add(s.value);
+    const defaultSources = Array.isArray(worldDefaults.sourceFilters) ? worldDefaults.sourceFilters : null;
+    if (defaultSources?.length) {
+      const valid = new Set((_cachedSourceOptions ?? []).map(s => s.value));
+      for (const v of defaultSources) {
+        if (valid.has(v)) this.#sourceFilters.add(v);
+      }
     }
+    // Fall back to isDefault sources when no world default is configured
     if (this.#sourceFilters.size === 0) {
-      for (const s of (_cachedSourceOptions ?? [])) this.#sourceFilters.add(s.value);
+      for (const s of (_cachedSourceOptions ?? [])) {
+        if (s.isDefault) this.#sourceFilters.add(s.value);
+      }
+      if (this.#sourceFilters.size === 0) {
+        for (const s of (_cachedSourceOptions ?? [])) this.#sourceFilters.add(s.value);
+      }
     }
     this.#saveFilters();
     this.render();

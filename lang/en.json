@@ -249,6 +249,29 @@
 
   "DSHIDEOUT.Browser.ResetFilters": "Reset Filters",
 
+  "DSHIDEOUT.Settings.DefaultBrowserFilters.DefaultSources": "Default Sources",
+  "DSHIDEOUT.Settings.DefaultBrowserFilters.SourcesHint": "These sources will be active when Reset Filters is clicked. Leave all unchecked to use the system defaults.",
+  "DSHIDEOUT.Settings.DefaultBrowserFilters.Category": "Category",
+  "DSHIDEOUT.Settings.DefaultBrowserFilters.Echelon": "Echelon",
+  "DSHIDEOUT.Settings.DefaultBrowserFilters.Save": "Save",
+  "DSHIDEOUT.Settings.DefaultBrowserFilters.Reset": "Reset to Defaults",
+
+  "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.Name": "Default Project Browser Filters",
+  "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.Hint": "Configure the default filters applied when Reset Filters is clicked in the Project Browser.",
+  "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.OpenLabel": "Configure Defaults…",
+  "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.DialogTitle": "Default Project Browser Filters",
+  "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.DialogHint": "These filters are applied when Reset Filters is clicked in the Project Browser. Each user's active filters are saved separately and are not affected until they click Reset.",
+  "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.Saved": "Default project browser filters saved.",
+  "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.ResetDone": "Default project browser filters reset to factory values.",
+
+  "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.Name": "Default Treasure Browser Filters",
+  "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.Hint": "Configure the default filters applied when Reset Filters is clicked in the Treasure Browser.",
+  "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.OpenLabel": "Configure Defaults…",
+  "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.DialogTitle": "Default Treasure Browser Filters",
+  "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.DialogHint": "These filters are applied when Reset Filters is clicked in the Treasure Browser. Each user's active filters are saved separately and are not affected until they click Reset.",
+  "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.Saved": "Default treasure browser filters saved.",
+  "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.ResetDone": "Default treasure browser filters reset to factory values.",
+
   "DSHIDEOUT.Settings.MinimumGmRole.Name": "Minimum Role for Gamemaster Views & Buttons",
   "DSHIDEOUT.Settings.MinimumGmRole.Hint": "The minimum user role treated as a Gamemaster by this module. Users at or above this role see GM-only buttons and panels (footer actions, project deletion, archive add/remove, party stash plus/minus). Default is Gamemaster.",
 

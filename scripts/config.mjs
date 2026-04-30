@@ -23,6 +23,8 @@ export const SETTINGS = {
   MINIMUM_GM_ROLE: "minimumGmRole",
   ALLOW_INDIVIDUAL_ROLLS: "allowIndividualRolls",
   DEFAULT_PROJECT_SETTINGS: "defaultProjectSettings",
+  DEFAULT_PROJECT_BROWSER_FILTERS: "defaultProjectBrowserFilters",
+  DEFAULT_TREASURE_BROWSER_FILTERS: "defaultTreasureBrowserFilters",
   PROJECT_BROWSER_FILTERS: "projectBrowserFilters",
   TREASURE_BROWSER_FILTERS: "treasureBrowserFilters",
 };
@@ -44,6 +46,25 @@ export const DEFAULT_PROJECT_PACK_IDS = new Set(["draw-steel.rewards"]);
 
 /** Default compendium pack IDs that contain treasure-type items. */
 export const DEFAULT_TREASURE_PACK_IDS = new Set(["draw-steel.rewards"]);
+
+/**
+ * Factory defaults for the Default Project Browser Filters setting.
+ * typeFilter: "" = All Types; sourceFilters: default pack IDs.
+ */
+export const PROJECT_BROWSER_FILTER_DEFAULTS = Object.freeze({
+  typeFilter: "",
+  sourceFilters: ["draw-steel.rewards"],
+});
+
+/**
+ * Factory defaults for the Default Treasure Browser Filters setting.
+ * categoryFilter: "" = All Categories; echelonFilter: 0 = All Echelons.
+ */
+export const TREASURE_BROWSER_FILTER_DEFAULTS = Object.freeze({
+  categoryFilter: "",
+  echelonFilter: 0,
+  sourceFilters: ["draw-steel.rewards"],
+});
 
 /** Index fields for project item packs. */
 export const PROJECT_INDEX_FIELDS = [

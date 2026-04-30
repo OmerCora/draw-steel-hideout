@@ -1,0 +1,39 @@
+<form class="dshideout-default-project-settings-form">
+  <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.DialogHint"}}</p>
+
+  {{!-- Category filter --}}
+  <div class="dshideout-form-row">
+    <label for="dshideout-dtbf-category">{{localize "DSHIDEOUT.Settings.DefaultBrowserFilters.Category"}}</label>
+    <select id="dshideout-dtbf-category" name="categoryFilter">
+      {{#each categoryOptions}}
+        <option value="{{this.value}}" {{#if (dshideout-eq this.value ../categoryFilter)}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{!-- Echelon filter --}}
+  <div class="dshideout-form-row">
+    <label for="dshideout-dtbf-echelon">{{localize "DSHIDEOUT.Settings.DefaultBrowserFilters.Echelon"}}</label>
+    <select id="dshideout-dtbf-echelon" name="echelonFilter">
+      {{#each echelonOptions}}
+        <option value="{{this.value}}" {{#if (dshideout-eq this.value ../echelonFilter)}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
+  {{!-- Source filters --}}
+  {{#if packOptions.length}}
+  <div class="dshideout-form-row">
+    <label>{{localize "DSHIDEOUT.Settings.DefaultBrowserFilters.DefaultSources"}}</label>
+    <div class="dshideout-source-check-list">
+      {{#each packOptions}}
+        <label class="dshideout-checkbox-row">
+          <input type="checkbox" name="sourceFilters" value="{{this.value}}" {{#if this.checked}}checked{{/if}} />
+          {{this.label}}
+        </label>
+      {{/each}}
+    </div>
+    <p class="dshideout-form-hint">{{localize "DSHIDEOUT.Settings.DefaultBrowserFilters.SourcesHint"}}</p>
+  </div>
+  {{/if}}
+</form>

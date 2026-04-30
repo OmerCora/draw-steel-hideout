@@ -12,6 +12,8 @@ import { registerSocket, HIDEOUT_SETTING_KEYS } from "./socket.mjs";
 import { ProgressProjectsDialog } from "./dialogs/progress-projects.mjs";
 import { clearAllIndividualRolls } from "./hideout/project-manager.mjs";
 import { DefaultProjectSettingsDialog } from "./dialogs/default-project-settings.mjs";
+import { DefaultProjectBrowserFiltersDialog } from "./dialogs/default-project-browser-filters.mjs";
+import { DefaultTreasureBrowserFiltersDialog } from "./dialogs/default-treasure-browser-filters.mjs";
 /* -------------------------------------------------- */
 /*  Init                                              */
 /* -------------------------------------------------- */
@@ -106,6 +108,40 @@ Hooks.once("init", () => {
     restricted: true,
   });
 
+  // World object: default filters for the Project Browser (applied on Reset Filters).
+  game.settings.register(MODULE_ID, SETTINGS.DEFAULT_PROJECT_BROWSER_FILTERS, {
+    scope: "world",
+    config: false,
+    type: Object,
+    default: {},
+  });
+
+  game.settings.registerMenu(MODULE_ID, "defaultProjectBrowserFiltersMenu", {
+    name: "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.Name",
+    hint: "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.Hint",
+    label: "DSHIDEOUT.Settings.DefaultProjectBrowserFilters.OpenLabel",
+    icon: "fa-solid fa-filter",
+    type: DefaultProjectBrowserFiltersDialog,
+    restricted: true,
+  });
+
+  // World object: default filters for the Treasure Browser (applied on Reset Filters).
+  game.settings.register(MODULE_ID, SETTINGS.DEFAULT_TREASURE_BROWSER_FILTERS, {
+    scope: "world",
+    config: false,
+    type: Object,
+    default: {},
+  });
+
+  game.settings.registerMenu(MODULE_ID, "defaultTreasureBrowserFiltersMenu", {
+    name: "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.Name",
+    hint: "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.Hint",
+    label: "DSHIDEOUT.Settings.DefaultTreasureBrowserFilters.OpenLabel",
+    icon: "fa-solid fa-filter",
+    type: DefaultTreasureBrowserFiltersDialog,
+    restricted: true,
+  });
+
   // Client-scope persisted browser filters (per user, per device).
   game.settings.register(MODULE_ID, SETTINGS.PROJECT_BROWSER_FILTERS, {
     scope: "client",
@@ -154,6 +190,9 @@ Hooks.once("init", () => {
     `modules/${MODULE_ID}/templates/dialogs/project-settings-footer.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/default-project-settings.hbs`,
     `modules/${MODULE_ID}/templates/dialogs/default-project-settings-footer.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/default-project-browser-filters.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/default-treasure-browser-filters.hbs`,
+    `modules/${MODULE_ID}/templates/dialogs/default-browser-filters-footer.hbs`,
     // Follower actor sheet templates
     `modules/${MODULE_ID}/templates/sheets/follower-sheet/stats.hbs`,
     `modules/${MODULE_ID}/templates/sheets/follower-sheet/biography.hbs`,
