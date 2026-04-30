@@ -1092,6 +1092,17 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (dragData?.type !== "Item") return;
     const item = await fromUuid(dragData.uuid);
     if (!item) return;
+
+    if (item.type === "treasure") {
+      if (!item.system?.project?.goal) {
+        ui.notifications.warn(game.i18n.format("DSHIDEOUT.Archives.NotAProjectItem", { name: item.name }));
+        return;
+      }
+      await this._addTreasureAsProject(item);
+      this.render({ parts: ["main"] });
+      return;
+    }
+
     if (item.type !== "project") {
       ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Projects.NotAProject"));
       return;
@@ -1471,11 +1482,15 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     // Compute carry-overflow before resetting (same logic as #onRestartProject).
     let carryPoints = 0;
+    let immediateComplete = false;
     if (project.carryOverflow && project.goal && project.points > project.goal) {
       carryPoints = project.points - project.goal;
+      // If overflow still meets/exceeds the goal, the project re-completes immediately
+      // (without capping points — a second restart will subtract another goal).
+      if (carryPoints >= project.goal) immediateComplete = true;
     }
 
-    await updateProject(projectId, { completed: false, points: carryPoints, yieldObtained: false, eventsTriggeredMilestones: [] });
+    await updateProject(projectId, { completed: immediateComplete, points: carryPoints, yieldObtained: false, eventsTriggeredMilestones: [] });
     ui.notifications.info(`Added ${quantity}× ${yieldItem.name} to the party stash.`);
     const displayName = project.additionalDetail
       ? `${project.name} (${project.additionalDetail})` : project.name;
@@ -1501,12 +1516,17 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // Carry over progress that exceeded the goal, if the project opted in.
     let newPoints = 0;
     let overflow = 0;
+    let immediateComplete = false;
     if (project.carryOverflow && project.completed && project.goal && project.points > project.goal) {
       overflow = project.points - project.goal;
       newPoints = overflow;
+      // If the overflow itself still meets/exceeds the goal, the project re-completes
+      // immediately. Points are not capped — a subsequent restart will subtract another
+      // goal-worth (e.g. 100/45 → 55/45 completed → 10/45 ongoing).
+      if (newPoints >= project.goal) immediateComplete = true;
     }
 
-    await updateProject(projectId, { completed: false, points: newPoints, yieldObtained: false, eventsTriggeredMilestones: [] });
+    await updateProject(projectId, { completed: immediateComplete, points: newPoints, yieldObtained: false, eventsTriggeredMilestones: [] });
     const restartedKey = overflow > 0 ? "DSHIDEOUT.Chat.ProjectRestartedOverflowMsg" : "DSHIDEOUT.Chat.ProjectRestartedMsg";
     await ChatMessage.create({
       content: `<p><strong>${game.i18n.localize("DSHIDEOUT.Chat.ProjectRestarted")}</strong> — ${game.i18n.format(restartedKey, { project: project.name, overflow })}</p>`,

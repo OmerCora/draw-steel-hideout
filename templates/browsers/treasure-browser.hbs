@@ -17,17 +17,23 @@
     </div>
 
     <div class="dshideout-filter-row">
-      <select name="categoryFilter" class="dshideout-select">
+      <select name="categoryFilter" class="dshideout-select dshideout-select--short">
         {{#each categoryOptions}}
           <option value="{{this.value}}" {{#dshideout-eq ../categoryFilter this.value}}selected{{/dshideout-eq}}>{{this.label}}</option>
         {{/each}}
       </select>
 
-      <select name="echelonFilter" class="dshideout-select">
+      <select name="echelonFilter" class="dshideout-select dshideout-select--short">
         {{#each echelonOptions}}
           <option value="{{this.value}}" {{#dshideout-eq ../echelonFilter this.value}}selected{{/dshideout-eq}}>{{this.label}}</option>
         {{/each}}
       </select>
+      <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-reset-filters"
+              data-action="resetFilters"
+              title="{{localize 'DSHIDEOUT.Browser.ResetFilters'}}">
+        <i class="fas fa-rotate-left"></i> {{localize "DSHIDEOUT.Browser.ResetFilters"}}
+      </button>
+      </div>
 
       <div class="dshideout-source-filter-row">
         <div class="dshideout-source-chips">
@@ -47,13 +53,7 @@
           </select>
         {{/if}}
       </div>
-      <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-reset-filters"
-              data-action="resetFilters"
-              title="{{localize 'DSHIDEOUT.Browser.ResetFilters'}}">
-        <i class="fas fa-rotate-left"></i> {{localize "DSHIDEOUT.Browser.ResetFilters"}}
-      </button>
     </div>
-  </div>
 
   {{!-- Count --}}
   <div class="dshideout-browser-count">
@@ -70,7 +70,8 @@
     {{else if entries.length}}
       {{#each entries}}
         <li class="dshideout-browser-row {{#if this.isSelected}}is-selected{{/if}}"
-            data-uuid="{{this.uuid}}">
+            data-uuid="{{this.uuid}}"
+            draggable="true">
           <div class="dshideout-browser-row-header" data-action="selectRow" data-uuid="{{this.uuid}}">
             <img class="dshideout-browser-icon" src="{{this.img}}" alt="{{this.name}}" />
             <div class="dshideout-browser-name-col">

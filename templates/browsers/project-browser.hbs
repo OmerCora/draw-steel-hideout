@@ -17,11 +17,17 @@
     </div>
 
       <div class="dshideout-filter-row">
-      <select name="typeFilter" class="dshideout-select">
+      <select name="typeFilter" class="dshideout-select dshideout-select--short">
         {{#each typeOptions}}
           <option value="{{this.value}}" {{#dshideout-eq ../typeFilter this.value}}selected{{/dshideout-eq}}>{{this.label}}</option>
         {{/each}}
       </select>
+      <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-reset-filters"
+              data-action="resetFilters"
+              title="{{localize 'DSHIDEOUT.Browser.ResetFilters'}}">
+        <i class="fas fa-rotate-left"></i> {{localize "DSHIDEOUT.Browser.ResetFilters"}}
+      </button>
+      </div>
 
       {{#if isGM}}
       <div class="dshideout-source-filter-row">
@@ -43,13 +49,7 @@
         {{/if}}
       </div>
       {{/if}}
-      <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-reset-filters"
-              data-action="resetFilters"
-              title="{{localize 'DSHIDEOUT.Browser.ResetFilters'}}">
-        <i class="fas fa-rotate-left"></i> {{localize "DSHIDEOUT.Browser.ResetFilters"}}
-      </button>
     </div>
-  </div>
 
   {{!-- Count --}}
   <div class="dshideout-browser-count">
@@ -65,7 +65,8 @@
       </li>
     {{else if entries.length}}
       {{#each entries}}
-        <li class="dshideout-browser-row {{#if this.isSelected}}is-selected{{/if}}" data-uuid="{{this.uuid}}">
+        <li class="dshideout-browser-row {{#if this.isSelected}}is-selected{{/if}}" data-uuid="{{this.uuid}}"
+            draggable="true">
           {{!-- Full top section is clickable to select / expand --}}
           <div class="dshideout-browser-row-top" data-action="selectRow" data-uuid="{{this.uuid}}">
             {{!-- Row 1: Icon + Name + Goal --}}

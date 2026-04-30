@@ -339,6 +339,16 @@ export class TreasureBrowserApp extends HandlebarsApplicationMixin(ApplicationV2
         }
       });
     }
+
+    // Row drag — emits standard Foundry item data so hideout drop zones and
+    // the Foundry Items sidebar both accept the drop.
+    for (const row of el.querySelectorAll(".dshideout-browser-row[data-uuid]")) {
+      row.addEventListener("dragstart", (e) => {
+        const uuid = row.dataset.uuid;
+        e.dataTransfer.setData("text/plain", JSON.stringify({ type: "Item", uuid }));
+        e.dataTransfer.effectAllowed = "copy";
+      });
+    }
   }
 
   static #onRemoveSource(event, target) {
