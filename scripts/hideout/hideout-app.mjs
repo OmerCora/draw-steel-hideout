@@ -6,7 +6,7 @@
 import { MODULE_ID, FOLLOWER_TYPE, HIDEOUT_FOLDER, SETTINGS } from "../config.mjs";
 import {
   getProjects, addProject, removeProject, updateProject, assignContributor,
-  removeContributor, getContributingProject, unmarkIndividualRoll,
+  removeContributor, getContributingProject, unmarkIndividualRoll, clearAllIndividualRolls,
 } from "./project-manager.mjs";
 import {
   getStash, addStashItem, removeStashItem, changeStashQuantity,
@@ -102,6 +102,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       progressProjects: HideoutApp.#onProgressProjects,
       individualProjectRoll: HideoutApp.#onIndividualProjectRoll,
       clearIndividualRoll: HideoutApp.#onClearIndividualRoll,
+      clearAllIndividualRolls: HideoutApp.#onClearAllIndividualRolls,
       // Roster
       removeFromRoster: HideoutApp.#onRemoveFromRoster,
       // Projects
@@ -163,6 +164,8 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // ── Projects ─────────────────────────────────────
     const allProjects = getProjects();
     const projects = this.#filterAndSortProjects(allProjects);
+    const individualRollsEnabled = game.settings.get(MODULE_ID, SETTINGS.ALLOW_INDIVIDUAL_ROLLS);
+    const hasIndividualRolls = allProjects.some(p => (p.individuallyRolledIds ?? []).length > 0);
 
     // ── Stash ────────────────────────────────────────
     const stashItems = getStash();
@@ -198,6 +201,8 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
       archivePrereqWidth,
       projectFilter: this.#projectFilter,
       projectSort: this.#projectSort,
+      individualRollsEnabled,
+      hasIndividualRolls,
       expandedDescriptions: this.#expandedDescriptions,
       hasProjects: allProjects.length > 0,
       hasActiveProjects: allProjects.some(p => !p.completed),
@@ -1705,6 +1710,16 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const projectId = target.dataset.projectId;
     if (!actorId || !projectId) return;
     await unmarkIndividualRoll(projectId, actorId);
+  }
+
+  static async #onClearAllIndividualRolls(event, target) {
+    event?.stopPropagation?.();
+    if (!hasHideoutPermission()) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.Permission.Denied"));
+      return;
+    }
+    await clearAllIndividualRolls();
+    this.render({ parts: ["main"] });
   }
 
   static async #onRemoveFromRoster(event, target) {

@@ -2,7 +2,7 @@
  * Draw Steel – Hideout
  * Shared helpers for project roll batches: rolling, applying points,
  * posting chat messages. Used by both the Progress Projects dialog
- * (Roll All) and the Individual Project Roll dialog.
+ * (Roll for All) and the Individual Project Roll dialog.
  */
 
 import { addProjectPoints } from "./project-manager.mjs";

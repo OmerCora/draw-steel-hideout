@@ -35,6 +35,16 @@
       </select>
     </div>
 
+    {{#if individualRollsEnabled}}
+      <div class="dshideout-projects-clear-rolls-row">
+        <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-clear-individual-rolls-btn"
+                data-action="clearAllIndividualRolls"
+                {{#unless hasIndividualRolls}}disabled{{/unless}}>
+          <i class="fas fa-rotate-left"></i> {{localize "DSHIDEOUT.Projects.ClearAllIndividualRolls"}}
+        </button>
+      </div>
+    {{/if}}
+
     <hr class="dshideout-divider" />
     {{!-- Projects list --}}
     <ul class="dshideout-projects-list">

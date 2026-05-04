@@ -35,9 +35,9 @@ This module gives the Director and the party a single window for everything that
 
 <img width="530" height="735" alt="Screenshot 2026-04-26 001539" src="https://github.com/user-attachments/assets/c6d7bd7d-849c-4d6d-a6ac-ccc1e86a9112" />
 
-### Roll All 
+### Roll for All 
 
-Opens a table with every contributor, their characteristic value, and edge/bane dropdowns. Click Roll All and the module:
+Opens a table with every contributor, their characteristic value, and edge/bane dropdowns. Click Roll for All and the module:
 
 - Evaluates every project roll simultaneously (Dice So Nice supported)
 - Posts a chat message with each actor, their roll broken down as dice total + modifier and the points earned

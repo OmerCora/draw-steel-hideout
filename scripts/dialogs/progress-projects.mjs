@@ -5,7 +5,7 @@
  */
 
 import { MODULE_ID, FOLLOWER_TYPE, CHARACTERISTIC_ROLL_KEYS } from "../config.mjs";
-import { getProjects, updateProject, clearAllIndividualRolls } from "../hideout/project-manager.mjs";
+import { getProjects, updateProject, clearAllIndividualRolls, markIndividualRoll } from "../hideout/project-manager.mjs";
 import { HideoutApp } from "../hideout/hideout-app.mjs";
 import {
   evaluateProjectEventTrigger,
@@ -33,7 +33,7 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
   static DEFAULT_OPTIONS = {
     id: "dshideout-progress-projects",
     classes: ["draw-steel-hideout", "dshideout-dialog"],
-    position: { width: 600, height: "auto" },
+    position: { width: 620, height: "auto" },
     window: {
       title: "DSHIDEOUT.ProgressProjects.Title",
       resizable: true,
@@ -41,6 +41,7 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
     },
     actions: {
       rollAll: ProgressProjectsDialog.#onRollAll,
+      rollFollowers: ProgressProjectsDialog.#onRollFollowers,
     },
   };
 
@@ -57,14 +58,16 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
     const groups = [];
     let totalRows = 0;
     let pendingRows = 0;
+    let pendingFollowerRows = 0;
 
     for (const project of projects) {
       const groupRows = [];
       let rowIndex = 0;
       const rolledIds = new Set(project.individuallyRolledIds ?? []);
       for (const actorId of project.contributorIds) {
-        const actor = game.actors.get(actorId);
+        const actor = game.actors.get(actorId) ?? game.items.get(actorId);
         if (!actor) continue;
+        const isFollower = actor.type === FOLLOWER_TYPE || actor.type === "follower";
 
         if (!this.#rollOptions.has(actorId)) {
           this.#rollOptions.set(actorId, { edges: 0, banes: 0, skill: "" });
@@ -114,9 +117,13 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
           skillOptions,
           isEvenRow: rowIndex % 2 === 0,
           alreadyRolled,
+          isFollower,
         });
         rowIndex++;
-        if (!alreadyRolled) pendingRows++;
+        if (!alreadyRolled) {
+          pendingRows++;
+          if (isFollower) pendingFollowerRows++;
+        }
       }
 
       if (groupRows.length === 0) continue;
@@ -137,9 +144,10 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       groups,
       hasRows: totalRows > 0,
       allAlreadyRolled,
+      hasPendingFollowers: pendingFollowerRows > 0,
       rollButtonLabel: allAlreadyRolled
         ? game.i18n.localize("DSHIDEOUT.ProgressProjects.ResetProjectRolls")
-        : game.i18n.localize("DSHIDEOUT.ProgressProjects.RollAll"),
+        : game.i18n.localize("DSHIDEOUT.ProgressProjects.RollForAll"),
       rollButtonIcon: allAlreadyRolled ? "fa-rotate-left" : "fa-dice-d20",
     };
   }
@@ -166,6 +174,22 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
         this.#rollOptions.set(actorId, opts);
       });
     }
+
+    for (const button of el.querySelectorAll("[data-roll-preview]")) {
+      button.addEventListener("mouseenter", () => this.#setRollPreview(button.dataset.rollPreview, true));
+      button.addEventListener("mouseleave", () => this.#setRollPreview(button.dataset.rollPreview, false));
+      button.addEventListener("focus", () => this.#setRollPreview(button.dataset.rollPreview, true));
+      button.addEventListener("blur", () => this.#setRollPreview(button.dataset.rollPreview, false));
+    }
+  }
+
+  #setRollPreview(target, active) {
+    if (!target) return;
+    for (const row of this.element.querySelectorAll("[data-contributor-row]")) {
+      const willRoll = row.dataset.alreadyRolled !== "1"
+        && (target === "all" || (target === "followers" && row.dataset.isFollower === "1"));
+      row.querySelector(".dshideout-progress-portrait")?.classList.toggle("dshideout-roll-preview-highlight", active && willRoll);
+    }
   }
 
   /* -------------------------------------------------- */
@@ -190,48 +214,45 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
     }
   }
 
+  static async #onRollFollowers(event, target) {
+    if (target.disabled) return;
+    target.disabled = true;
+    const originalHTML = target.innerHTML;
+    target.innerHTML = `<i class="fas fa-cog fa-spin"></i> ${game.i18n.localize("DSHIDEOUT.ProgressProjects.RollInProgress")}`;
+
+    try {
+      await ProgressProjectsDialog.#runRollFollowers.call(this);
+    } finally {
+      if (!this.closing && this.rendered) {
+        target.disabled = false;
+        target.innerHTML = originalHTML;
+      }
+    }
+  }
+
+  static async #runRollFollowers() {
+    const rowConfigs = ProgressProjectsDialog.#collectRollConfigs.call(this, { followersOnly: true });
+    if (!rowConfigs.length) {
+      ui.notifications.warn(game.i18n.localize("DSHIDEOUT.ProgressProjects.NoFollowerRolls"));
+      return;
+    }
+
+    await this.close();
+
+    await executeRollPipeline(rowConfigs, {
+      headerOverride: game.i18n.localize("DSHIDEOUT.ProgressProjects.FollowerChatHeader"),
+    });
+
+    for (const cfg of rowConfigs) {
+      await markIndividualRoll(cfg.project.id, cfg.actor.id);
+    }
+  }
+
   static async #runRollAll() {
     const projects = getProjects().filter(p => !p.completed && p.contributorIds.length > 0);
     if (!projects.length) return;
 
-    const el = this.element;
-    const rows = el.querySelectorAll("[data-contributor-row]");
-    const rowConfigs = [];
-
-    for (const row of rows) {
-      // Skip rows that already rolled individually — they are excluded
-      // from the collective batch but still drive event resolution.
-      if (row.dataset.alreadyRolled === "1") continue;
-      const actorId = row.dataset.actorId;
-      const projectId = row.dataset.projectId;
-      if (!actorId || !projectId) continue;
-      const actor = game.actors.get(actorId);
-      const project = projects.find(p => p.id === projectId);
-      if (!actor || !project) continue;
-      const opts = this.#rollOptions.get(actorId) ?? { edges: 0, banes: 0, skill: "" };
-      // Cap (edges_bonus + skill_bonus) at +4 so a 2-edge actor with a skill
-      // can't exceed the system's edge cap. Banes stay separate.
-      const netBoon = (opts.edges ?? 0) - (opts.banes ?? 0);
-      const edgeBonus = netBoon > 0 ? Math.min(4, 2 * netBoon) : 0;
-      const skillBaseBonus = opts.skill ? 2 : 0;
-      const cappedSum = Math.min(4, edgeBonus + skillBaseBonus);
-      const skillBonus = Math.max(0, cappedSum - edgeBonus);
-      const skillLabel = opts.skill ? (ds.CONFIG.skills?.list?.[opts.skill]?.label ?? opts.skill) : null;
-
-      // Pick the highest-value applicable characteristic for this actor,
-      // matching the logic used in _prepareContext for display.
-      const chars = project.rollCharacteristic ?? [];
-      const bestCharKey = chars.length
-        ? chars.reduce((best, c) => {
-            const val = actor.system.characteristics?.[c]?.value ?? 0;
-            return val > (actor.system.characteristics?.[best]?.value ?? -Infinity) ? c : best;
-          }, chars[0])
-        : "might";
-      const rollKey = CHARACTERISTIC_ROLL_KEYS[bestCharKey] ?? "M";
-      const formula = `2d10 + @${rollKey}`;
-      const rollData = actor.getRollData?.() ?? {};
-      rowConfigs.push({ actor, project, opts: { ...opts, bonuses: skillBonus, skillLabel }, charKey: bestCharKey, formula, rollData });
-    }
+    const rowConfigs = ProgressProjectsDialog.#collectRollConfigs.call(this);
 
     // No remaining rolls = "Reset Project Rolls" mode: still resolve events,
     // then clear the individual-roll state.
@@ -329,6 +350,61 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
 
     // No explicit render needed — _saveProjects fires updateSetting which triggers
     // the debounced dshideout:refresh hook, keeping all clients in sync cleanly.
+  }
+
+  static #collectRollConfigs(options = {}) {
+    const projects = getProjects().filter(p => !p.completed && p.contributorIds.length > 0);
+    const rowConfigs = [];
+
+    for (const row of this.element.querySelectorAll("[data-contributor-row]")) {
+      if (row.dataset.alreadyRolled === "1") continue;
+      if (options.followersOnly && row.dataset.isFollower !== "1") continue;
+
+      const actorId = row.dataset.actorId;
+      const projectId = row.dataset.projectId;
+      if (!actorId || !projectId) continue;
+      const actor = game.actors.get(actorId) ?? game.items.get(actorId);
+      const project = projects.find(p => p.id === projectId);
+      if (!actor || !project) continue;
+
+      const opts = this.#rollOptions.get(actorId) ?? { edges: 0, banes: 0, skill: "" };
+      const netBoon = (opts.edges ?? 0) - (opts.banes ?? 0);
+      const edgeBonus = netBoon > 0 ? Math.min(4, 2 * netBoon) : 0;
+      const skillBaseBonus = opts.skill ? 2 : 0;
+      const cappedSum = Math.min(4, edgeBonus + skillBaseBonus);
+      const skillBonus = Math.max(0, cappedSum - edgeBonus);
+      const skillLabel = opts.skill ? (ds.CONFIG.skills?.list?.[opts.skill]?.label ?? opts.skill) : null;
+
+      const chars = project.rollCharacteristic ?? [];
+      const bestCharKey = chars.length
+        ? chars.reduce((best, c) => {
+            const val = actor.system.characteristics?.[c]?.value ?? 0;
+            return val > (actor.system.characteristics?.[best]?.value ?? -Infinity) ? c : best;
+          }, chars[0])
+        : "might";
+      const rollKey = CHARACTERISTIC_ROLL_KEYS[bestCharKey] ?? "M";
+      const formula = `2d10 + @${rollKey}`;
+      rowConfigs.push({
+        actor,
+        project,
+        opts: { ...opts, bonuses: skillBonus, skillLabel },
+        charKey: bestCharKey,
+        formula,
+        rollData: ProgressProjectsDialog.#getRollData(actor),
+      });
+    }
+
+    return rowConfigs;
+  }
+
+  static #getRollData(actor) {
+    return actor.getRollData?.() ?? {
+      M: actor.system.characteristics?.might?.value ?? 0,
+      A: actor.system.characteristics?.agility?.value ?? 0,
+      R: actor.system.characteristics?.reason?.value ?? 0,
+      I: actor.system.characteristics?.intuition?.value ?? 0,
+      P: actor.system.characteristics?.presence?.value ?? 0,
+    };
   }
 
   /**

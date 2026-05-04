@@ -32,6 +32,7 @@
                   data-contributor-row
                   data-actor-id="{{this.actorId}}"
                   data-project-id="{{this.projectId}}"
+                  {{#if this.isFollower}}data-is-follower="1"{{/if}}
                   {{#if this.alreadyRolled}}data-already-rolled="1"{{/if}}>
 
                 {{!-- Actor --}}
@@ -92,8 +93,15 @@
     {{/each}}
 
     <div class="dshideout-dialog-footer">
+      <button type="button" class="dshideout-btn dshideout-btn-secondary dshideout-btn-large"
+              data-action="rollFollowers"
+              data-roll-preview="followers"
+              {{#unless hasPendingFollowers}}disabled{{/unless}}>
+        <i class="fas fa-user-group"></i> {{localize "DSHIDEOUT.ProgressProjects.RollFollowers"}}
+      </button>
       <button type="button" class="dshideout-btn dshideout-btn-primary dshideout-btn-large"
-              data-action="rollAll">
+              data-action="rollAll"
+              data-roll-preview="all">
         <i class="fas {{rollButtonIcon}}"></i> {{rollButtonLabel}}
       </button>
     </div>
