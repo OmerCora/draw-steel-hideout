@@ -4,7 +4,7 @@
  * apply breakthroughs on critical (19-20 total), update project points, post chat.
  */
 
-import { MODULE_ID, FOLLOWER_TYPE, CHARACTERISTIC_ROLL_KEYS } from "../config.mjs";
+import { MODULE_ID, FOLLOWER_TYPE, CHARACTERISTIC_ROLL_KEYS, SETTINGS } from "../config.mjs";
 import { getProjects, updateProject, clearAllIndividualRolls, markIndividualRoll } from "../hideout/project-manager.mjs";
 import { HideoutApp } from "../hideout/hideout-app.mjs";
 import {
@@ -54,6 +54,7 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
   /** @inheritdoc */
   async _prepareContext(options) {
     const projects = getProjects().filter(p => !p.completed && p.contributorIds.length > 0);
+    const individualRollsEnabled = game.settings.get(MODULE_ID, SETTINGS.ALLOW_INDIVIDUAL_ROLLS);
 
     const groups = [];
     let totalRows = 0;
@@ -63,7 +64,7 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
     for (const project of projects) {
       const groupRows = [];
       let rowIndex = 0;
-      const rolledIds = new Set(project.individuallyRolledIds ?? []);
+      const rolledIds = individualRollsEnabled ? new Set(project.individuallyRolledIds ?? []) : new Set();
       for (const actorId of project.contributorIds) {
         const actor = game.actors.get(actorId) ?? game.items.get(actorId);
         if (!actor) continue;
@@ -236,6 +237,7 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       ui.notifications.warn(game.i18n.localize("DSHIDEOUT.ProgressProjects.NoFollowerRolls"));
       return;
     }
+    const individualRollsEnabled = game.settings.get(MODULE_ID, SETTINGS.ALLOW_INDIVIDUAL_ROLLS);
 
     await this.close();
 
@@ -243,8 +245,12 @@ export class ProgressProjectsDialog extends HandlebarsApplicationMixin(Applicati
       headerOverride: game.i18n.localize("DSHIDEOUT.ProgressProjects.FollowerChatHeader"),
     });
 
-    for (const cfg of rowConfigs) {
-      await markIndividualRoll(cfg.project.id, cfg.actor.id);
+    if (individualRollsEnabled) {
+      for (const cfg of rowConfigs) {
+        await markIndividualRoll(cfg.project.id, cfg.actor.id);
+      }
+    } else {
+      await clearAllIndividualRolls();
     }
   }
 

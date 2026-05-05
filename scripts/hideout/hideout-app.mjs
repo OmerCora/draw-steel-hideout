@@ -165,7 +165,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const allProjects = getProjects();
     const projects = this.#filterAndSortProjects(allProjects);
     const individualRollsEnabled = game.settings.get(MODULE_ID, SETTINGS.ALLOW_INDIVIDUAL_ROLLS);
-    const hasIndividualRolls = allProjects.some(p => (p.individuallyRolledIds ?? []).length > 0);
+    const hasIndividualRolls = individualRollsEnabled && allProjects.some(p => (p.individuallyRolledIds ?? []).length > 0);
 
     // ── Stash ────────────────────────────────────────
     const stashItems = getStash();
@@ -469,7 +469,7 @@ export class HideoutApp extends HandlebarsApplicationMixin(ApplicationV2) {
         .filter(Boolean);
 
       // Decorate each contributor with individual-roll flags
-      const individuallyRolledIds = p.individuallyRolledIds ?? [];
+      const individuallyRolledIds = individualRollsEnabled ? (p.individuallyRolledIds ?? []) : [];
       const decoratedContributors = contributors.map(c => {
         const hasRolledIndividually = individuallyRolledIds.includes(c.id);
         let canRollIndividually = false;
