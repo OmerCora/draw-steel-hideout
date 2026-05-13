@@ -7,7 +7,7 @@
  */
 
 import { MODULE_ID, SETTINGS, PROJECT_SETTING_DEFAULTS } from "../config.mjs";
-import { saveWorldSetting } from "../socket.mjs";
+import { saveWorldSetting, mutateProjectsSetting } from "../socket.mjs";
 
 // ── Typedefs ──────────────────────────────────────────────────────────────────
 
@@ -138,6 +138,11 @@ export async function removeProject(projectId) {
  * @param {Partial<HideoutProject>} changes
  */
 export async function updateProject(projectId, changes) {
+  if (!game.user.isGM) {
+    await mutateProjectsSetting({ type: "updateProject", projectId, changes });
+    return;
+  }
+
   const projects = _loadProjects();
   const idx = projects.findIndex(p => p.id === projectId);
   if (idx === -1) return;
@@ -152,6 +157,10 @@ export async function updateProject(projectId, changes) {
  * @returns {Promise<{project: HideoutProject, justCompleted: boolean}>}
  */
 export async function addProjectPoints(projectId, points) {
+  if (!game.user.isGM) {
+    return mutateProjectsSetting({ type: "addProjectPoints", projectId, points });
+  }
+
   const projects = _loadProjects();
   const project = projects.find(p => p.id === projectId);
   if (!project) return null;
@@ -223,6 +232,11 @@ export function getContributingProject(actorId) {
  * @param {string} actorId
  */
 export async function markIndividualRoll(projectId, actorId) {
+  if (!game.user.isGM) {
+    await mutateProjectsSetting({ type: "markIndividualRoll", projectId, actorId });
+    return;
+  }
+
   const projects = _loadProjects();
   const project = projects.find(p => p.id === projectId);
   if (!project) return;
@@ -249,6 +263,11 @@ export function hasIndividualRoll(projectId, actorId) {
  * Reset individual-roll state for every project.
  */
 export async function clearAllIndividualRolls() {
+  if (!game.user.isGM) {
+    await mutateProjectsSetting({ type: "clearAllIndividualRolls" });
+    return;
+  }
+
   const projects = _loadProjects();
   let changed = false;
   for (const project of projects) {
@@ -266,6 +285,11 @@ export async function clearAllIndividualRolls() {
  * @param {string} actorId
  */
 export async function unmarkIndividualRoll(projectId, actorId) {
+  if (!game.user.isGM) {
+    await mutateProjectsSetting({ type: "unmarkIndividualRoll", projectId, actorId });
+    return;
+  }
+
   const projects = _loadProjects();
   const project = projects.find(p => p.id === projectId);
   if (!project || !Array.isArray(project.individuallyRolledIds)) return;
